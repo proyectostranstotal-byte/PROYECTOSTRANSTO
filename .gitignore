@@ -1,0 +1,5 @@
+# Datos personales: nunca subir planillas al repo
+*.xlsx
+*.xlsm
+*.csv
+__pycache__/
