@@ -21,7 +21,7 @@ Cambios que aplica sobre la planilla original (conserva todo lo demás):
 import sys
 import warnings
 from copy import copy
-from datetime import date, datetime
+from datetime import date
 
 import openpyxl
 from openpyxl.formatting.rule import CellIsRule, FormulaRule
@@ -100,6 +100,10 @@ def idx(y, m):
     return y * 12 + m
 
 
+MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+         "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+
 # =========================================================================
 def main(src, dst):
     wb = openpyxl.load_workbook(src)
@@ -149,9 +153,9 @@ def main(src, dst):
     y, m = anio - 1, 1
     R = f"$5:${LAST}"
     for r in range(FIRST, LAST + 1):
-        pg[f"A{r}"] = f"=YEAR(B{r})*12+MONTH(B{r})"
-        pg[f"B{r}"] = datetime(y, m, 1)
-        style(pg[f"B{r}"], bold=True, fmt="mmmm yyyy", h="left")
+        pg[f"A{r}"] = idx(y, m)                       # índice del mes (columna oculta)
+        pg[f"B{r}"] = f"{MESES[m - 1]} {y}"
+        style(pg[f"B{r}"], bold=True, h="left")
         cu = f"(Cuotas!$M$5:$M$102<=$A{r})*(Cuotas!$N$5:$N$102>=$A{r})"
         money(pg[f"C{r}"], f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="Crédito")*Cuotas!$F$5:$F$102)')
         entrada(pg[f"D{r}"], fmt=FECHA)
@@ -183,10 +187,16 @@ def main(src, dst):
                 pg[f"{col}{row}"] = "✔"
                 pg[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="center")
     tr = LAST + 2
-    label(pg[f"B{tr}"], "Pendiente de pago (meses vencidos y actual)", bold=True, bg=CELESTE)
-    money(pg[f"C{tr}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}<=Pagos!$P$1)*$J${FIRST}:$J${LAST})", bold=True, color=ROJO, bg=CELESTE)
+    for rr in (tr, tr + 1):
+        pg.merge_cells(f"B{rr}:H{rr}")
+        for col in "CDEFGH":
+            style(pg[f"{col}{rr}"], bg=CELESTE)
+    label(pg[f"B{tr}"], "Pendiente de pago (meses vencidos y el actual)", bold=True, bg=CELESTE)
+    money(pg[f"I{tr}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}<=Pagos!$P$1)*$J${FIRST}:$J${LAST})", bold=True, color=ROJO, bg=CELESTE)
     label(pg[f"B{tr+1}"], "Comprometido en meses futuros", bold=True, bg=CELESTE)
-    money(pg[f"C{tr+1}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}>Pagos!$P$1)*$I${FIRST}:$I${LAST})", bold=True, bg=CELESTE)
+    money(pg[f"I{tr+1}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}>Pagos!$P$1)*$I${FIRST}:$I${LAST})", bold=True, bg=CELESTE)
+    pg.merge_cells(f"B{tr+3}:K{tr+3}")
+    pg.row_dimensions[tr + 3].height = 30
     note(pg, f"B{tr+3}", "Cubre desde enero del año anterior hasta diciembre del año siguiente al de Configuración. "
          "Si una compra termina después, agregá filas copiando la última.")
     pg.conditional_formatting.add(f"B{FIRST}:K{LAST}", FormulaRule(formula=[f"$A{FIRST}=Pagos!$P$1"], fill=fill("FFE8F0FA")))
@@ -343,9 +353,7 @@ def main(src, dst):
                            "Sobrante del mes", "Acumulado\n(plata propia)"], 1):
         header(bi.cell(34, i), h)
     bi.row_dimensions[34].height = 30
-    meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
-             "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-    for i, nombre in enumerate(meses, 1):
+    for i, nombre in enumerate(MESES, 1):
         r = 34 + i
         bi[f"H{r}"] = f"='Configuración'!$B$3*12+{i}"
         bi[f"I{r}"] = f'=TEXT(DATE(\'Configuración\'!$B$3,{i},1),"YYYY-MM")'

@@ -164,11 +164,47 @@ El celular es el compromiso más grande: 233.093 por mes hasta mayo 2027, el 9 %
 
 ---
 
+## 6. Versión mejorada: `Gestor_de_Gastos_v2.xlsx`
+
+Generada con `scripts/mejorar_gestor.py` sobre el archivo original (conserva todos tus datos y estilos). Verificada con LibreOffice: 2.472 fórmulas, 0 errores, y los totales coinciden con el recálculo independiente en pandas.
+
+### Hojas nuevas
+
+- **Pagos** (después de Cuotas). Una fila por mes, de enero 2025 a diciembre 2027. Para cada mes calcula cuánto pagar de **Crédito**, **MercadoPago** y **Otros** (préstamo, débito). Al lado de cada monto hay una celda amarilla **"Pagado el"**: cuando pagás el resumen escribís la fecha (o una ✔). Los meses anteriores a septiembre 2026 ya están marcados con ✔. Estado por mes: ✅ Todo pagado · ⏳ Pagar este mes · ⚠️ Atrasado · 📅 Próximo. Al pie: pendiente de pago y comprometido a futuro.
+- **Billetera** (después de Tablero). "Cuánta plata deberías tener hoy" = saldo inicial + ingresos − gastos sueltos − ahorro apartado − tarjetas marcadas como pagadas + fondo Aston Birra (porque está en tu poder). Debajo: lo que todavía falta pagar por tarjeta y el **disponible real** después de pagar todo. Un bloque opcional de **control de caja** para contar efectivo + banco + MercadoPago y ver la diferencia con lo teórico. Al final, tabla de **sobrante mes a mes** y su acumulado.
+
+### Cambios en hojas existentes
+
+- **Cuotas**: "Pagadas", "Faltan" y "Estado" salen de las marcas de Pagos (antes dependían de la fecha de hoy). Nuevas columnas "Restante ($)" y "Próxima a pagar". Estado "⚠️ Atrasada" cuando hay un mes vencido sin marcar.
+- **Tablero**: fórmula de Supermercado restaurada, TOTAL ahora suma sólo gastos, y arriba a la derecha aparecen Crédito del mes, MercadoPago del mes (con ✅ pagado / ⏳ pendiente) y la Billetera de hoy.
+- **Movimientos**: fila de ejemplo borrada; desplegables de Tipo y Medio de pago leen toda la lista de Configuración (incluye "Prestamo").
+- **Instrucciones**: sección "Novedades: Billetera y Pagos" con el circuito sugerido.
+
+### Circuito de uso
+
+1. Cargás movimientos a diario en Movimientos (y compras financiadas en Cuotas).
+2. Cuando pagás una tarjeta, anotás la fecha en Pagos.
+3. Mirás Billetera para saber cuánto deberías tener y cuánto te queda libre.
+
+### Valores al 04/09/2026 (saldo inicial 0)
+
+| Concepto | Monto |
+|---|---|
+| Deberías tener hoy (incluye 11.500 de Aston Birra) | 2.625.518 |
+| Pendiente septiembre: Crédito / MercadoPago / Préstamo | 1.123.832 / 184.048 / 72.496 |
+| Disponible real después de pagar todo | 1.245.141 |
+| Comprometido en meses futuros | 3.868.867 |
+
+Cargá en Billetera!B4 la plata que tenías el 6/8/2026 (antes del primer movimiento) para que el número sea exacto.
+
+---
+
 ## Reproducir el análisis
 
 ```bash
 pip install openpyxl pandas
 python3 scripts/analizar_gestor.py /ruta/a/Gestor_de_Gastos.xlsx
+python3 scripts/mejorar_gestor.py /ruta/a/Gestor_de_Gastos.xlsx Gestor_de_Gastos_v2.xlsx
 ```
 
 El script recalcula todo desde Movimientos y Cuotas (sin depender de los valores cacheados del Tablero) e imprime las tablas de este informe. El archivo `.xlsx` está excluido del repo por `.gitignore` porque contiene datos personales.
