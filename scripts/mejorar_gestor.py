@@ -305,7 +305,7 @@ def main(src, dst):
                      f'+(Pagos!$H${FIRST}:$H${LAST}<>"")*Pagos!$G${FIRST}:$G${LAST}))', color=ROJO)
     label(bi["A14"], "+ Fondo Aston Birra (está en tu poder)", indent=True)
     money(bi["B14"], "='Aston Birra'!$B$6", color=VERDE)
-    label(bi["A15"], "= 👛 Deberías tener hoy", bold=True, bg=CELESTE)
+    label(bi["A15"], "👛 TOTAL: deberías tener hoy", bold=True, bg=CELESTE)
     money(bi["B15"], "=B9+B10-B11-B12-B13+B14", bold=True, size=14, color=AZUL_TITULO, bg=CELESTE)
     bi.row_dimensions[15].height = 30
     label(bi["A16"], "de eso, es plata del club Aston Birra", color=GRIS, indent=True)
@@ -321,7 +321,7 @@ def main(src, dst):
     money(bi["B21"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$F${FIRST}:$F${LAST}="")*Pagos!$E${FIRST}:$E${LAST})', color=ROJO)
     label(bi["A22"], "Otros pendientes (préstamo, etc.)", indent=True)
     money(bi["B22"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$H${FIRST}:$H${LAST}="")*Pagos!$G${FIRST}:$G${LAST})', color=ROJO)
-    label(bi["A23"], "= ✅ Disponible real después de pagar todo", bold=True, bg=CELESTE)
+    label(bi["A23"], "✅ DISPONIBLE REAL después de pagar todo", bold=True, bg=CELESTE)
     money(bi["B23"], "=B15-B20-B21-B22", bold=True, size=14, color=VERDE, bg=CELESTE)
     bi.row_dimensions[23].height = 30
     label(bi["A24"], "Comprometido en cuotas de meses futuros (info)", color=GRIS, indent=True)
@@ -332,7 +332,7 @@ def main(src, dst):
     for r, t in ((27, "Efectivo que contaste"), (28, "Banco / débito"), (29, "MercadoPago / billeteras")):
         label(bi[f"A{r}"], t, indent=True)
         entrada(bi[f"B{r}"], fmt=MONEDA)
-    label(bi["A30"], "= Total real", bold=True)
+    label(bi["A30"], "Total real contado", bold=True)
     money(bi["B30"], "=SUM(B27:B29)", bold=True)
     label(bi["A31"], "Diferencia real − teórico (negativo = hay gastos sin cargar)", bold=True, bg=CELESTE)
     money(bi["B31"], '=IF(B30=0,"",B30-B15)', bold=True, bg=CELESTE)
