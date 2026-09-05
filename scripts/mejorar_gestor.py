@@ -109,6 +109,7 @@ PAGOS_REALES = [
     ((2026, 9), "G", 52.95),                     # USD comprados con $ 80.000 (incluye los 20 de Anthropic, que se reintegran)
     ((2026, 9), "I", date(2026, 9, 2)),          # Mercado Pago cierre 27/08: débito automático del 02/09
     ((2026, 9), "J", 273984.72),
+    ((2026, 10), "J", 206344),                   # Mercado Pago cierre 27/09: próximo resumen informado (incluye mitad de Fiama)
 ]
 
 # Correcciones de filas de Cuotas confirmadas contra los resúmenes: (descripción, columna, valor nuevo)
@@ -119,9 +120,11 @@ AJUSTES_CUOTAS = [
     ("Notebook", "F", 116666.58), ("Regalo fiama", "F", 50382.50), ("Garmin forerunner", "F", 68214.73),
     ("Celular", "F", 233093.72), ("Ojotas", "F", 49999), ("Cena", "F", 17163), ("Seguro", "F", 158178),
     ("Super Ebe", "F", 52807.50), ("Adidas Urban", "F", 55833.35), ("Proteina", "F", 112413.43),
+    # importes exactos del resumen Mercado Pago cierre 27/08/2026 (Heladeriacami = Creatina + Balanza)
+    ("Zapas adidas", "F", 13379), ("Creatina-D3", "F", 17018.54), ("Balanza-Ojeras", "F", 37262.09),
 ]
 # "Regalo fiama" aparece dos veces (junio y septiembre): el ajuste anterior aplica a la primera; la de septiembre va aparte
-AJUSTES_CUOTAS_POR_FILA = [(31, "F", 43333.20)]   # fila 31 = Regalo fiama 6 cuotas desde 09/2026 (127-MOOV 43.333,20)
+AJUSTES_CUOTAS_POR_FILA = [(31, "F", 43333.20), (12, "F", 17962.25)]   # fila 12 = Suplementos 4 cuotas (TODOENMELAMIN)   # fila 31 = Regalo fiama 6 cuotas desde 09/2026 (127-MOOV 43.333,20)
 
 # Suscripciones que se pagan en dólares: descripción → USD por mes (columna R de Cuotas; F pasa a calcularse con el dólar)
 CUOTAS_USD = {"Youtube Premium": 6.97, "Spotify": 2.22, "Google One": 2.99, "Pulso": 13.99}
@@ -165,7 +168,7 @@ def main(src, dst):
     anio = int(cfg["B3"].value)
     cfg["A4"] = "Dólar (para pasar a pesos lo que pagás en USD):"
     cfg["A4"]._style = copy(cfg["A3"]._style)
-    entrada(cfg["B4"], 1511, fmt='"$ "#,##0')   # 80.000 / 52,95 USD
+    entrada(cfg["B4"], 1520, fmt='"$ "#,##0')   # dólar informado por el usuario (05/09/2026)
     cfg["D4"] = "◄ ponelo al cambio del día que comprás los dólares"
     cfg["D4"]._style = copy(cfg["D3"]._style)
     hoy = date.today()
