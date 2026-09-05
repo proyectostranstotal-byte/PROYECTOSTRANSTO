@@ -579,7 +579,10 @@ function renderMas(){
     <details><summary class="small muted">Categorías y presupuestos mensuales</summary><div id="cfCats" style="margin-top:8px">${c.categorias.map((x,i)=>`<div class="fields2" style="align-items:center"><div class="field" style="margin-bottom:6px"><input type="text" value="${esc(x.nombre)}" data-i="${i}" data-k="nombre"> <span class="chip">${x.tipo}</span></div><div class="field" style="margin-bottom:6px"><input type="number" placeholder="presupuesto $" value="${x.presupuesto||''}" data-i="${i}" data-k="presupuesto"></div></div>`).join('')}<button class="btn sm" onclick="nuevaCat()">+ Categoría</button> <button class="btn sm primary" onclick="guardarCats()">Guardar categorías</button></div></details>
   </div>
   <div class="sechead"><h2>Exportar</h2></div>
-  <div class="card"><div class="toolbar"><button class="btn" onclick="exportar('movimientos')">Movimientos CSV</button><button class="btn" onclick="exportar('cuotas')">Cuotas CSV</button><button class="btn" onclick="exportar('todo')">Respaldo JSON</button></div></div>`;
+  <div class="card"><div class="toolbar"><button class="btn" onclick="exportar('movimientos')">Movimientos CSV</button><button class="btn" onclick="exportar('cuotas')">Cuotas CSV</button><button class="btn" onclick="exportar('todo')">Respaldo JSON</button></div>
+    <p class="note" style="margin:12px 0 6px">Para pasar todo a otra cuenta o recuperar datos: elegí un respaldo JSON. Reemplaza lo que haya cargado.</p>
+    <label class="btn"><input type="file" id="impIn" accept="application/json,.json" style="display:none">Importar respaldo JSON</label></div>`;
+  $('#impIn').addEventListener('change',()=>$('#impIn').files[0]&&importarRespaldo($('#impIn').files[0]));
 }
 window.guardarCfg=async()=>{await saveConfig({dolar:Number($('#cfDolar').value)||1,saldoInicial:Number($('#cfSaldo').value)||0,anio:Number($('#cfAnio').value)||cfg().anio});toast('Configuración guardada')};
 window.guardarCats=async()=>{const c=cfg();const cats=c.categorias.map(x=>({...x}));document.querySelectorAll('#cfCats input[data-i]').forEach(i=>{const x=cats[Number(i.dataset.i)];if(!x)return;if(i.dataset.k==='nombre')x.nombre=i.value.trim()||x.nombre;else x.presupuesto=i.value===''?null:Number(i.value)});await saveConfig({categorias:cats});toast('Categorías guardadas')};
@@ -606,6 +609,18 @@ window.exportar=async tipo=>{ if(!S.downloads){toast('La descarga no está dispo
   else if(tipo==='cuotas'){data=csv([['descripcion','categoria','medio','fecha_1a_cuota','cuotas','valor_pesos','usd','pagadas'],...cuotasArr().map(c=>[c.desc,c.categoria,c.medio,c.fecha,c.n,c.valor??'',c.usd??'',pagadasDe(c)])]);filename='cuotas.csv'}
   else{data=JSON.stringify({config:S.config,extras:S.extras,movimientos:S.movs,cuotas:S.cuotas,pagos:S.pagos},null,1);filename='billetera-respaldo.json'}
   try{await S.downloads.save({filename,data});toast('Guardado')}catch(e){if(e.code!=='declined')toast('No se pudo descargar')} };
+
+window.importarRespaldo=async file=>{ if(!S.db){toast('Sin base de datos');return} let d; try{d=JSON.parse(await file.text())}catch(e){toast('El archivo no es un JSON válido');return}
+  if(!d||typeof d!=='object'||!(d.cuotas||d.movimientos||d.config)){toast('Ese archivo no es un respaldo de la Billetera');return}
+  const n=Object.keys(d.movimientos||{}).length+Object.keys(d.cuotas||{}).length+Object.keys(d.pagos||{}).length;
+  if(!confirm(`Importar ${Object.keys(d.cuotas||{}).length} cuotas, ${Object.keys(d.movimientos||{}).length} meses de movimientos y ${Object.keys(d.pagos||{}).length} meses de pagos. Reemplaza lo cargado. ¿Seguir?`))return;
+  toast('Importando…'); try{
+    if(d.config)await S.db.doc('config/main').set(d.config); if(d.extras)await S.db.doc('extras/main').set(d.extras);
+    for(const [k,v] of Object.entries(d.movimientos||{}))await S.db.doc('movimientos/'+k).set(v);
+    for(const [k,v] of Object.entries(d.cuotas||{}))await S.db.doc('cuotas/'+k).set(v);
+    for(const [k,v] of Object.entries(d.pagos||{}))await S.db.doc('pagos/'+k).set(v);
+    for(const [k,v] of Object.entries(d.resumenes||{}))await S.db.doc('resumenes/'+k).set(v);
+    toast('Respaldo importado'); }catch(e){console.error(e);toast('Falló la importación: '+(e.code||e.message))} };
 
 /* =================== sheet =================== */
 function sheet(html){ $('#sheet').innerHTML=html; $('#overlay').classList.add('open'); document.body.style.overflow='hidden'; const f=$('#sheet input,#sheet select'); }
