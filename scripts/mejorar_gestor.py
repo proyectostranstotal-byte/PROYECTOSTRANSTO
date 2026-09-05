@@ -100,20 +100,43 @@ def idx(y, m):
     return y * 12 + m
 
 
-# (año, mes), columna de Pagos, valor. D/G/J = "Pagado el"; E/H/K = "Monto real pagado".
+# (año, mes), columna de Pagos, valor. E/I/L = "Pagado el"; F/J/M = "Monto real $"; G = "USD pagados".
 PAGOS_REALES = [
-    ((2026, 8), "E", 452253),                    # Visa cierre 27/07: pago del 06/08 (436.451,55 + USD 10,43 al 1.515)
-    ((2026, 8), "H", 202017.61),                 # Mercado Pago cierre 27/07: débito automático del 06/08
-    ((2026, 9), "D", "✔"),                       # Visa cierre 27/08: pagada (1.150.000 + USD 32, sin Anthropic)
-    ((2026, 9), "E", "=1150000+32*1514"),        # editá el 1514 por el cambio al que compraste los dólares
-    ((2026, 9), "G", date(2026, 9, 2)),          # Mercado Pago cierre 27/08: débito automático del 02/09
-    ((2026, 9), "H", 273984.72),
+    ((2026, 8), "F", 452253),                    # Visa cierre 27/07: pago del 06/08 (436.451,55 + USD 10,43 al 1.515)
+    ((2026, 8), "J", 202017.61),                 # Mercado Pago cierre 27/07: débito automático del 06/08
+    ((2026, 9), "E", "✔"),                       # Visa cierre 27/08: pagada
+    ((2026, 9), "F", 1150000),                   # pesos pagados (resumen 1.174.457,23 menos percepción 30 % = 1.150.407,34)
+    ((2026, 9), "G", 32.95),                     # USD pagados sin Anthropic (52,95 − 20)
+    ((2026, 9), "I", date(2026, 9, 2)),          # Mercado Pago cierre 27/08: débito automático del 02/09
+    ((2026, 9), "J", 273984.72),
 ]
 
-# Correcciones de filas de Cuotas confirmadas por el usuario contra los resúmenes: (descripción, columna, valor nuevo)
+# Correcciones de filas de Cuotas confirmadas contra los resúmenes: (descripción, columna, valor nuevo)
 AJUSTES_CUOTAS = [
-    ("Omega 3", "C", "MercadoPago"), ("Omega 3", "F", 26412.5),        # MP 06/08 ML 52.825 en 2 cuotas, mitad cada uno con su novia
-    ("Regalo benja", "C", "MercadoPago"), ("Regalo benja", "F", 17449.12),  # MP 02/08 Distrimicabeb 34.898,23 en 2, mitad cada uno
+    ("Omega 3", "C", "MercadoPago"), ("Omega 3", "F", 26412.5),          # MP 06/08 ML 52.825 en 2, mitad cada uno con su novia
+    ("Regalo benja", "C", "MercadoPago"), ("Regalo benja", "F", 17449.12),  # MP 02/08 Distrimicabeb 34.898,23 en 2, mitad c/u
+    # importes exactos del resumen Visa cierre 27/08/2026
+    ("Notebook", "F", 116666.58), ("Regalo fiama", "F", 50382.50), ("Garmin forerunner", "F", 68214.73),
+    ("Celular", "F", 233093.72), ("Ojotas", "F", 49999), ("Cena", "F", 17163), ("Seguro", "F", 158178),
+    ("Super Ebe", "F", 52807.50), ("Adidas Urban", "F", 55833.35), ("Proteina", "F", 112413.43),
+]
+# "Regalo fiama" aparece dos veces (junio y septiembre): el ajuste anterior aplica a la primera; la de septiembre va aparte
+AJUSTES_CUOTAS_POR_FILA = [(31, "F", 43333.20)]   # fila 31 = Regalo fiama 6 cuotas desde 09/2026 (127-MOOV 43.333,20)
+
+# Suscripciones que se pagan en dólares: descripción → USD por mes (columna R de Cuotas; F pasa a calcularse con el dólar)
+CUOTAS_USD = {"Youtube Premium": 6.97, "Spotify": 2.22, "Google One": 2.99, "Pulso": 13.99}
+
+# Gastos del resumen Visa 27/08/2026 que faltaban en Cuotas: (descripción, categoría, medio, fecha 1ª cuota, cuotas, $ por cuota, USD por cuota)
+CUOTAS_NUEVAS = [
+    ("Comisión renovación anual Visa + IVA", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 1, 42324.99, None),
+    ("Entreno (suplementos)", "Suplementos / Nutrición", "Crédito", date(2026, 9, 6), 1, 53515, None),
+    ("MELI 02/08", "Otros gastos", "Crédito", date(2026, 9, 6), 1, 3490, None),
+    ("Impuestos s/ suscripciones USD (IVA 21% + IIBB 3%)", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 12, 11972.70, None),
+    ("Impuesto sellos Visa", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 12, 1244.29, None),
+    ("Saldo resumen anterior sin pagar", "Otros gastos", "Crédito", date(2026, 9, 6), 1, 20483.15, None),
+    ("Devolución HBO Max", "Otros gastos", "Crédito", date(2026, 9, 6), 1, -23207.80, None),
+    ("Paramount+", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 3.79),
+    ("Hevy Gym", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 2.99),
 ]
 
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
@@ -121,11 +144,19 @@ MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto
 
 
 # =========================================================================
+TC = "'Configuración'!$B$4"
+
+
 def main(src, dst):
     wb = openpyxl.load_workbook(src)
     cfg, mov, cuo, tab, ins, ast = (wb["Configuración"], wb["Movimientos"], wb["Cuotas"],
                                     wb["Tablero"], wb["Instrucciones"], wb["Aston Birra"])
     anio = int(cfg["B3"].value)
+    cfg["A4"] = "Dólar (para pasar a pesos lo que pagás en USD):"
+    cfg["A4"]._style = copy(cfg["A3"]._style)
+    entrada(cfg["B4"], 1514, fmt='"$ "#,##0')
+    cfg["D4"] = "◄ ponelo al cambio del día que comprás los dólares"
+    cfg["D4"]._style = copy(cfg["D3"]._style)
     hoy = date.today()
     hoy_idx = idx(hoy.year, hoy.month)
 
@@ -143,74 +174,77 @@ def main(src, dst):
             dv.formula1 = "'Configuración'!$F$7:$F$10"
 
     # ------------------------------------------------------------------ Pagos
-    # Columnas: A idx(oculta) | B Mes | C/D/E Crédito: a pagar, pagado el, monto real |
-    # F/G/H MercadoPago | I/J/K Otros | L Total | M Pendiente | N Estado | O Diferencia | P auxiliar
+    # A idx(oculta) | B Mes | C Crédito $ | D Crédito USD | E Pagado el | F Monto real $ | G USD pagados |
+    # H MP $ | I Pagado el | J Monto real $ | K Otros $ | L Pagado el | M Monto real $ |
+    # N Total $ del mes | O Pendiente $ | P Estado | Q Diferencia $ | R auxiliar (hoy)
     pg = wb.create_sheet("Pagos")
     pg.sheet_view.showGridLines = False
-    pg.merge_cells("A1:O1")
-    title(pg, "A1", "💳  Pagos  —  qué pagar cada mes, cuándo lo pagaste y cuánto pagaste de verdad")
+    pg.merge_cells("A1:Q1")
+    title(pg, "A1", "💳  Pagos  —  qué pagar cada mes (en pesos y en dólares), cuándo y cuánto pagaste")
     pg.row_dimensions[1].height = 30
-    pg.merge_cells("A2:O2")
-    note(pg, "A2", "Cada fila es un mes. 'A pagar' sale solo de la hoja Cuotas. Cuando pagues el resumen de una tarjeta, "
-         "escribí la fecha (o una ✔) en 'Pagado el' y, si el resumen fue distinto a lo calculado (impuestos, comisiones, "
-         "dólares al cambio del día), escribí el importe en 'Monto real': la Billetera descuenta ese importe y la columna "
-         "'Diferencia' te muestra cuánto quedó sin cargar en Cuotas. Los meses anteriores a la creación de esta hoja ya "
-         "quedaron marcados con ✔.")
+    pg.merge_cells("A2:Q2")
+    note(pg, "A2", "Cada fila es un mes. 'A pagar' sale solo de la hoja Cuotas: la Visa se separa en pesos y en dólares (los USD "
+         "se pasan a pesos con el dólar de Configuración). Cuando pagues, escribí la fecha (o ✔) en 'Pagado el', los pesos que "
+         "pagaste en 'Monto real $' y los dólares que compraste en 'USD pagados'. La Billetera descuenta eso, y 'Diferencia' "
+         "muestra cuánto quedó sin cargar en Cuotas. Los meses anteriores a la creación de esta hoja ya quedaron marcados con ✔.")
     pg.row_dimensions[2].height = 60
-    pg["P1"] = "=YEAR(TODAY())*12+MONTH(TODAY())"   # índice del mes actual (auxiliar)
-    pg["P2"] = "hoy (auxiliar)"
-    pg.column_dimensions["P"].hidden = True
+    pg["R1"] = "=YEAR(TODAY())*12+MONTH(TODAY())"   # índice del mes actual (auxiliar)
+    pg["R2"] = "hoy (auxiliar)"
+    pg.column_dimensions["R"].hidden = True
 
     heads = ["idx", "Mes",
-             "💳 Crédito\na pagar", "Pagado el\n(fecha o ✔)", "Monto real\npagado (opcional)",
-             "🟡 MercadoPago\na pagar", "Pagado el\n(fecha o ✔)", "Monto real\npagado (opcional)",
-             "Otros a pagar\n(préstamo, débito…)", "Pagado el\n(fecha o ✔)", "Monto real\npagado (opcional)",
-             "Total del mes\n(calculado)", "Pendiente", "Estado", "Diferencia\nreal − calculado"]
+             "💳 Crédito\na pagar ($)", "💳 Crédito\na pagar (USD)", "Pagado el\n(fecha o ✔)", "Monto real\npagado ($)", "USD\npagados",
+             "🟡 MercadoPago\na pagar ($)", "Pagado el\n(fecha o ✔)", "Monto real\npagado ($)",
+             "Otros a pagar\n(préstamo…)", "Pagado el\n(fecha o ✔)", "Monto real\npagado ($)",
+             "Total del mes ($)\n(USD al dólar config.)", "Pendiente ($)", "Estado", "Diferencia ($)\nreal − calculado"]
     for i, h in enumerate(heads, 1):
         header(pg.cell(4, i), h)
     pg.row_dimensions[4].height = 42
     FIRST, N_MESES = 5, 36
     LAST = FIRST + N_MESES - 1
+    USD_FMT = '"USD "#,##0.00'
     y, m = anio - 1, 1
     for r in range(FIRST, LAST + 1):
-        pg[f"A{r}"] = idx(y, m)                       # índice del mes (columna oculta)
+        pg[f"A{r}"] = idx(y, m)
         pg[f"B{r}"] = f"{MESES[m - 1]} {y}"
         style(pg[f"B{r}"], bold=True, h="left")
         cu = f"(Cuotas!$M$5:$M$102<=$A{r})*(Cuotas!$N$5:$N$102>=$A{r})"
-        money(pg[f"C{r}"], f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="Crédito")*Cuotas!$F$5:$F$102)')
-        entrada(pg[f"D{r}"], fmt=FECHA)
-        entrada(pg[f"E{r}"], fmt=MONEDA)
-        money(pg[f"F{r}"], f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="MercadoPago")*Cuotas!$F$5:$F$102)')
-        entrada(pg[f"G{r}"], fmt=FECHA)
-        entrada(pg[f"H{r}"], fmt=MONEDA)
-        money(pg[f"I{r}"], f"=SUMPRODUCT({cu}*Cuotas!$F$5:$F$102)-C{r}-F{r}")
-        entrada(pg[f"J{r}"], fmt=FECHA)
-        entrada(pg[f"K{r}"], fmt=MONEDA)
-        money(pg[f"L{r}"], f"=C{r}+F{r}+I{r}", bold=True)
-        money(pg[f"M{r}"], f'=IF(D{r}="",C{r},0)+IF(G{r}="",F{r},0)+IF(J{r}="",I{r},0)', color=ROJO)
-        pg[f"N{r}"] = (f'=IF(L{r}=0,"—",IF(M{r}=0,"✅ Todo pagado",IF($A{r}<Pagos!$P$1,"⚠️ Atrasado",'
-                       f'IF($A{r}=Pagos!$P$1,"⏳ Pagar este mes","📅 Próximo"))))')
-        style(pg[f"N{r}"], h="center")
-        money(pg[f"O{r}"], (f'=IF(AND(D{r}<>"",E{r}<>""),E{r}-C{r},0)+IF(AND(G{r}<>"",H{r}<>""),H{r}-F{r},0)'
-                            f'+IF(AND(J{r}<>"",K{r}<>""),K{r}-I{r},0)'), color=GRIS)
+        money(pg[f"C{r}"], f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="Crédito")*(Cuotas!$R$5:$R$102="")*Cuotas!$F$5:$F$102)')
+        pg[f"D{r}"] = f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="Crédito")*Cuotas!$R$5:$R$102)'
+        style(pg[f"D{r}"], fmt=USD_FMT, color=AZUL_TITULO)
+        entrada(pg[f"E{r}"], fmt=FECHA)
+        entrada(pg[f"F{r}"], fmt=MONEDA)
+        entrada(pg[f"G{r}"], fmt=USD_FMT)
+        money(pg[f"H{r}"], f'=SUMPRODUCT({cu}*(Cuotas!$C$5:$C$102="MercadoPago")*Cuotas!$F$5:$F$102)')
+        entrada(pg[f"I{r}"], fmt=FECHA)
+        entrada(pg[f"J{r}"], fmt=MONEDA)
+        money(pg[f"K{r}"], f"=SUMPRODUCT({cu}*Cuotas!$F$5:$F$102)-C{r}-D{r}*{TC}-H{r}")
+        entrada(pg[f"L{r}"], fmt=FECHA)
+        entrada(pg[f"M{r}"], fmt=MONEDA)
+        money(pg[f"N{r}"], f"=C{r}+D{r}*{TC}+H{r}+K{r}", bold=True)
+        money(pg[f"O{r}"], f'=IF(E{r}="",C{r}+D{r}*{TC},0)+IF(I{r}="",H{r},0)+IF(L{r}="",K{r},0)', color=ROJO)
+        pg[f"P{r}"] = (f'=IF(N{r}=0,"—",IF(O{r}=0,"✅ Todo pagado",IF($A{r}<Pagos!$R$1,"⚠️ Atrasado",'
+                       f'IF($A{r}=Pagos!$R$1,"⏳ Pagar este mes","📅 Próximo"))))')
+        style(pg[f"P{r}"], h="center")
+        money(pg[f"Q{r}"], (f'=IF(AND(E{r}<>"",F{r}<>""),F{r}-C{r},0)+IF(AND(E{r}<>"",G{r}<>""),(G{r}-D{r})*{TC},0)'
+                            f'+IF(AND(I{r}<>"",J{r}<>""),J{r}-H{r},0)+IF(AND(L{r}<>"",M{r}<>""),M{r}-K{r},0)'), color=GRIS)
         pg.row_dimensions[r].height = 20
         m += 1
         if m == 13:
             y, m = y + 1, 1
     # Marcar como pagados los meses anteriores al actual (la planilla se creó con esas cuotas ya pagas)
-    grupos = {"Crédito": "D", "MercadoPago": "G"}
+    grupos = {"Crédito": "E", "MercadoPago": "I"}
     for r in range(5, 103):
         d, n, f, medio = cuo[f"D{r}"].value, cuo[f"E{r}"].value, cuo[f"F{r}"].value, cuo[f"C{r}"].value
         if not d or not n:
             continue
-        col = grupos.get(medio, "J")
+        col = grupos.get(medio, "L")
         ini = idx(d.year, d.month)
         for k in range(ini, min(ini + int(n) - 1, hoy_idx - 1) + 1):
             row = FIRST + (k - idx(anio - 1, 1))
             if FIRST <= row <= LAST:
                 pg[f"{col}{row}"] = "✔"
                 pg[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="center")
-    # Pagos reales informados por el usuario (resúmenes Visa Galicia y Mercado Pago, cierres 27/07 y 27/08/2026)
     for (yy, mm), col, val in PAGOS_REALES:
         row = FIRST + (idx(yy, mm) - idx(anio - 1, 1))
         if FIRST <= row <= LAST:
@@ -219,25 +253,25 @@ def main(src, dst):
                 pg[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="center")
     tr = LAST + 2
     for rr in (tr, tr + 1):
-        pg.merge_cells(f"B{rr}:K{rr}")
-        for col in "CDEFGHIJK":
+        pg.merge_cells(f"B{rr}:M{rr}")
+        for col in "CDEFGHIJKLM":
             style(pg[f"{col}{rr}"], bg=CELESTE)
     label(pg[f"B{tr}"], "Pendiente de pago (meses vencidos y el actual)", bold=True, bg=CELESTE)
-    money(pg[f"L{tr}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}<=Pagos!$P$1)*$M${FIRST}:$M${LAST})", bold=True, color=ROJO, bg=CELESTE)
+    money(pg[f"N{tr}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}<=Pagos!$R$1)*$O${FIRST}:$O${LAST})", bold=True, color=ROJO, bg=CELESTE)
     label(pg[f"B{tr+1}"], "Comprometido en meses futuros", bold=True, bg=CELESTE)
-    money(pg[f"L{tr+1}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}>Pagos!$P$1)*$L${FIRST}:$L${LAST})", bold=True, bg=CELESTE)
-    pg.merge_cells(f"B{tr+3}:O{tr+3}")
+    money(pg[f"N{tr+1}"], f"=SUMPRODUCT(($A${FIRST}:$A${LAST}>Pagos!$R$1)*$N${FIRST}:$N${LAST})", bold=True, bg=CELESTE)
+    pg.merge_cells(f"B{tr+3}:Q{tr+3}")
     pg.row_dimensions[tr + 3].height = 30
     note(pg, f"B{tr+3}", "Cubre desde enero del año anterior hasta diciembre del año siguiente al de Configuración. "
-         "Si una compra termina después, agregá filas copiando la última. Los dólares de la Visa se pagan en dólares: "
-         "en 'Monto real' poné pesos + dólares al cambio del día que pagaste.")
-    pg.conditional_formatting.add(f"B{FIRST}:O{LAST}", FormulaRule(formula=[f"$A{FIRST}=Pagos!$P$1"], fill=fill("FFE8F0FA")))
-    pg.conditional_formatting.add(f"N{FIRST}:N{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Atrasado",N{FIRST}))'], font=Font(color=ROJO, bold=True), fill=fill("FFF8CBAD")))
-    pg.conditional_formatting.add(f"N{FIRST}:N{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Todo pagado",N{FIRST}))'], font=Font(color=VERDE, bold=True)))
-    pg.conditional_formatting.add(f"N{FIRST}:N{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Pagar este mes",N{FIRST}))'], font=Font(color=ROJO, bold=True)))
-    pg.conditional_formatting.add(f"O{FIRST}:O{LAST}", CellIsRule(operator="notEqual", formula=["0"], font=Font(color="FFB9770E", bold=True)))
+         "Si una compra termina después, agregá filas copiando la última. 'Crédito (USD)' es lo que tenés que comprar en "
+         "dólares ese mes; en 'USD pagados' anotá lo que compraste de verdad.")
+    pg.conditional_formatting.add(f"B{FIRST}:Q{LAST}", FormulaRule(formula=[f"$A{FIRST}=Pagos!$R$1"], fill=fill("FFE8F0FA")))
+    pg.conditional_formatting.add(f"P{FIRST}:P{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Atrasado",P{FIRST}))'], font=Font(color=ROJO, bold=True), fill=fill("FFF8CBAD")))
+    pg.conditional_formatting.add(f"P{FIRST}:P{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Todo pagado",P{FIRST}))'], font=Font(color=VERDE, bold=True)))
+    pg.conditional_formatting.add(f"P{FIRST}:P{LAST}", FormulaRule(formula=[f'ISNUMBER(SEARCH("Pagar este mes",P{FIRST}))'], font=Font(color=ROJO, bold=True)))
+    pg.conditional_formatting.add(f"Q{FIRST}:Q{LAST}", CellIsRule(operator="notEqual", formula=["0"], font=Font(color="FFB9770E", bold=True)))
     pg.column_dimensions["A"].hidden = True
-    for col, w in zip("BCDEFGHIJKLMNO", [17, 14, 13, 15, 15, 13, 15, 15, 13, 15, 15, 14, 18, 15]):
+    for col, w in zip("BCDEFGHIJKLMNOPQ", [17, 15, 13, 13, 15, 11, 15, 13, 15, 14, 13, 15, 17, 14, 18, 15]):
         pg.column_dimensions[col].width = w
     pg.freeze_panes = "C5"
 
@@ -246,6 +280,32 @@ def main(src, dst):
         for r in range(5, 103):
             if str(cuo[f"A{r}"].value or "").strip().lower() == desc.lower():
                 cuo[f"{col}{r}"] = val
+                break
+    for r, col, val in AJUSTES_CUOTAS_POR_FILA:
+        cuo[f"{col}{r}"] = val
+    # columna R: cuota en dólares (opcional). Si está, F (pesos) se calcula con el dólar de Configuración.
+    cuo["R4"] = "Cuota en USD\n(si se paga en dólares)"
+    cuo["R4"]._style = copy(cuo["L4"]._style)
+    for r in range(5, 103):
+        entrada(cuo[f"R{r}"], fmt='"USD "#,##0.00')
+    def poner_usd(r, usd):
+        cuo[f"R{r}"] = usd
+        cuo[f"F{r}"] = f"=R{r}*{TC}"
+        style(cuo[f"F{r}"], fmt=MONEDA, color=AZUL_TITULO)
+    for desc, usd in CUOTAS_USD.items():
+        for r in range(5, 103):
+            if str(cuo[f"A{r}"].value or "").strip().lower() == desc.lower():
+                poner_usd(r, usd)
+                break
+    ultima = max(r for r in range(5, 103) if cuo[f"A{r}"].value)
+    for desc, cat, medio, fecha, n, pesos, usd in CUOTAS_NUEVAS:
+        ultima += 1
+        r = ultima
+        cuo[f"A{r}"], cuo[f"B{r}"], cuo[f"C{r}"], cuo[f"D{r}"], cuo[f"E{r}"] = desc, cat, medio, fecha, n
+        if usd is not None:
+            poner_usd(r, usd)
+        else:
+            cuo[f"F{r}"] = pesos
     # Validaciones heredadas rotas (#REF! y una "custom" sin fórmula): Excel las rechaza.
     from openpyxl.worksheet.datavalidation import DataValidation
     cuo.data_validations.dataValidation = [
@@ -258,7 +318,8 @@ def main(src, dst):
         cuo.add_data_validation(dv)
     cuo["A2"] = ("Completá sólo lo amarillo (A–F). El total, el período y el estado se calculan solos y cada cuota "
                  "se suma al Tablero y al Resumen del mes que corresponde. 'Pagadas' y 'Faltan' salen de las marcas "
-                 "que hacés en la hoja Pagos cuando pagás cada tarjeta.")
+                 "que hacés en la hoja Pagos cuando pagás cada tarjeta. Lo que pagás en dólares va en 'Cuota en USD' (columna R): "
+                 "el valor en pesos se calcula solo con el dólar de Configuración.")
     cuo["K4"] = "Faltan"
     # La "Tabla_1" y el autofiltro que exportó Google Sheets se superponen en A4:L102 y
     # Excel los rechaza al abrir ("Característica quitada: Tabla"). Se dejan como rango común.
@@ -271,14 +332,14 @@ def main(src, dst):
         cuo[c]._style = copy(cuo["L4"]._style)
     PA = f"Pagos!$A${FIRST}:$A${LAST}"
     for r in range(5, 103):
-        pagos_marca = (f'(($C{r}="Crédito")*(Pagos!$D${FIRST}:$D${LAST}<>"")'
-                       f'+($C{r}="MercadoPago")*(Pagos!$G${FIRST}:$G${LAST}<>"")'
-                       f'+($C{r}<>"Crédito")*($C{r}<>"MercadoPago")*(Pagos!$J${FIRST}:$J${LAST}<>""))')
+        pagos_marca = (f'(($C{r}="Crédito")*(Pagos!$E${FIRST}:$E${LAST}<>"")'
+                       f'+($C{r}="MercadoPago")*(Pagos!$I${FIRST}:$I${LAST}<>"")'
+                       f'+($C{r}<>"Crédito")*($C{r}<>"MercadoPago")*(Pagos!$L${FIRST}:$L${LAST}<>""))')
         cuo[f"J{r}"] = f'=IF($D{r}="","",SUMPRODUCT(({PA}>=$M{r})*({PA}<=$N{r})*{pagos_marca}))'
         cuo[f"K{r}"] = f'=IF($D{r}="","",$E{r}-$J{r})'
         cuo[f"L{r}"] = (f'=IF($D{r}="","",IF($J{r}>=$E{r},"✅ Finalizado",'
-                        f'IF(MIN($E{r},Pagos!$P$1-$M{r})>$J{r},"⚠️ Atrasada "&$J{r}&"/"&$E{r},'
-                        f'IF($M{r}>Pagos!$P$1,"⏳ Por comenzar","🔵 En curso "&$J{r}&"/"&$E{r}))))')
+                        f'IF(MIN($E{r},Pagos!$R$1-$M{r})>$J{r},"⚠️ Atrasada "&$J{r}&"/"&$E{r},'
+                        f'IF($M{r}>Pagos!$R$1,"⏳ Por comenzar","🔵 En curso "&$J{r}&"/"&$E{r}))))')
         cuo[f"P{r}"] = f'=IF($D{r}="","",$K{r}*$F{r})'
         cuo[f"Q{r}"] = f'=IF($D{r}="","",IF($K{r}=0,"—",TEXT(EDATE($D{r},$J{r}),"MM/YYYY")))'
         cuo[f"K{r}"]._style = copy(cuo[f"J{r}"]._style)
@@ -291,6 +352,7 @@ def main(src, dst):
     cuo.column_dimensions["L"].width = 20
     cuo.column_dimensions["P"].width = 15
     cuo.column_dimensions["Q"].width = 15
+    cuo.column_dimensions["R"].width = 16
 
     # ---------------------------------------------------------------- Tablero
     tab["C18"] = tab["C17"].value.replace("$A17", "$A18")
@@ -303,17 +365,17 @@ def main(src, dst):
     for c in ("E37", "F37"):
         tab[c]._style = copy(tab["C37"]._style)
     tab["F37"].number_format = "0.0%"
-    header(tab["E5"], "💳 Crédito del mes", bg=AZUL_HEADER)
+    header(tab["E5"], "💳 Crédito del mes ($)", bg=AZUL_HEADER)
     header(tab["F5"], "🟡 MercadoPago del mes", bg=AZUL_HEADER)
     header(tab["G5"], "👛 Billetera hoy", bg=AZUL_HEADER)
     money(tab["E6"], f"=SUMIFS(Pagos!$C${FIRST}:$C${LAST},{PA},$H$2)", bold=True, size=14, color=ROJO, bg=CELESTE)
-    money(tab["F6"], f"=SUMIFS(Pagos!$F${FIRST}:$F${LAST},{PA},$H$2)", bold=True, size=14, color=ROJO, bg=CELESTE)
+    money(tab["F6"], f"=SUMIFS(Pagos!$H${FIRST}:$H${LAST},{PA},$H$2)", bold=True, size=14, color=ROJO, bg=CELESTE)
     money(tab["G6"], "=Billetera!$B$15", bold=True, size=14, color=AZUL_TITULO, bg=CELESTE)
     for c in "EFG":
         tab[f"{c}6"].alignment = Alignment(horizontal="center", vertical="center")
-    tab["E7"] = (f'=IFERROR(IF(E6=0,"sin cuotas",IF(INDEX(Pagos!$D${FIRST}:$D${LAST},MATCH($H$2,{PA},0))<>"",'
-                 f'"✅ pagado","⏳ pendiente")),"")')
-    tab["F7"] = (f'=IFERROR(IF(F6=0,"sin cuotas",IF(INDEX(Pagos!$G${FIRST}:$G${LAST},MATCH($H$2,{PA},0))<>"",'
+    tab["E7"] = (f'=IFERROR(IF(E6+SUMIFS(Pagos!$D${FIRST}:$D${LAST},{PA},$H$2)=0,"sin cuotas","+ USD "&TEXT(SUMIFS(Pagos!$D${FIRST}:$D${LAST},{PA},$H$2),"0.00")'
+                 f'&IF(INDEX(Pagos!$E${FIRST}:$E${LAST},MATCH($H$2,{PA},0))<>""," · ✅ pagado"," · ⏳ pendiente")),"")')
+    tab["F7"] = (f'=IFERROR(IF(F6=0,"sin cuotas",IF(INDEX(Pagos!$I${FIRST}:$I${LAST},MATCH($H$2,{PA},0))<>"",'
                  f'"✅ pagado","⏳ pendiente")),"")')
     tab["G7"] = "→ detalle en hoja Billetera"
     for c in "EFG":
@@ -333,7 +395,7 @@ def main(src, dst):
          "como pagadas en Pagos, y le suma el fondo de Aston Birra porque esa plata está en tu poder. "
          "Completá las celdas amarillas: el saldo inicial y, cuando quieras controlar, lo que contaste de verdad.")
     bi.row_dimensions[2].height = 48
-    bi["H1"] = "=Pagos!$P$1"                       # mes actual
+    bi["H1"] = "=Pagos!$R$1"                       # mes actual
     bi["H2"] = ("=IF(COUNT(Movimientos!$A:$A)=0,$H$1,YEAR(MIN(Movimientos!$A:$A))*12"
                 "+MONTH(MIN(Movimientos!$A:$A)))")  # primer mes cargado
     bi["I1"], bi["I2"] = "hoy (auxiliar)", "primer mes (auxiliar)"
@@ -358,10 +420,10 @@ def main(src, dst):
     money(bi["B11"], f'=SUMIFS(Movimientos!$F:$F,Movimientos!$B:$B,"Gasto",Movimientos!$A:$A,{HOY})', color=ROJO)
     label(bi["A12"], "− Ahorro apartado (no cuenta como disponible)", indent=True)
     money(bi["B12"], f'=SUMIFS(Movimientos!$F:$F,Movimientos!$B:$B,"Ahorro",Movimientos!$A:$A,{HOY})', color=ROJO)
-    label(bi["A13"], "− Tarjetas y cuotas ya pagadas (monto real si lo cargaste en Pagos)", indent=True)
-    money(bi["B13"], f'=SUMPRODUCT(({PA}>=$H$2)*((Pagos!$D${FIRST}:$D${LAST}<>"")*(Pagos!$E${FIRST}:$E${LAST}+(Pagos!$E${FIRST}:$E${LAST}="")*Pagos!$C${FIRST}:$C${LAST})'
-                     f'+(Pagos!$G${FIRST}:$G${LAST}<>"")*(Pagos!$H${FIRST}:$H${LAST}+(Pagos!$H${FIRST}:$H${LAST}="")*Pagos!$F${FIRST}:$F${LAST})'
-                     f'+(Pagos!$J${FIRST}:$J${LAST}<>"")*(Pagos!$K${FIRST}:$K${LAST}+(Pagos!$K${FIRST}:$K${LAST}="")*Pagos!$I${FIRST}:$I${LAST})))', color=ROJO)
+    label(bi["A13"], "− Tarjetas y cuotas ya pagadas (monto real + USD pagados al dólar de Configuración)", indent=True)
+    money(bi["B13"], f'=SUMPRODUCT(({PA}>=$H$2)*((Pagos!$E${FIRST}:$E${LAST}<>"")*(Pagos!$F${FIRST}:$F${LAST}+(Pagos!$F${FIRST}:$F${LAST}="")*Pagos!$C${FIRST}:$C${LAST}+(Pagos!$G${FIRST}:$G${LAST}+(Pagos!$G${FIRST}:$G${LAST}="")*Pagos!$D${FIRST}:$D${LAST})*{TC})'
+                     f'+(Pagos!$I${FIRST}:$I${LAST}<>"")*(Pagos!$J${FIRST}:$J${LAST}+(Pagos!$J${FIRST}:$J${LAST}="")*Pagos!$H${FIRST}:$H${LAST})'
+                     f'+(Pagos!$L${FIRST}:$L${LAST}<>"")*(Pagos!$M${FIRST}:$M${LAST}+(Pagos!$M${FIRST}:$M${LAST}="")*Pagos!$K${FIRST}:$K${LAST})))', color=ROJO)
     label(bi["A14"], "+ Fondo Aston Birra (está en tu poder)", indent=True)
     money(bi["B14"], "='Aston Birra'!$B$6", color=VERDE)
     label(bi["A15"], "👛 TOTAL: deberías tener hoy", bold=True, bg=CELESTE)
@@ -374,17 +436,17 @@ def main(src, dst):
 
     header(bi["A19"], "💳  Lo que todavía tenés que pagar", bg=AZUL_HEADER)
     header(bi["B19"], "Monto", bg=AZUL_HEADER)
-    label(bi["A20"], "Crédito pendiente (meses vencidos y actual)", indent=True)
-    money(bi["B20"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$D${FIRST}:$D${LAST}="")*Pagos!$C${FIRST}:$C${LAST})', color=ROJO)
+    label(bi["A20"], "Crédito pendiente (meses vencidos y actual; USD al dólar de Configuración)", indent=True)
+    money(bi["B20"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$E${FIRST}:$E${LAST}="")*(Pagos!$C${FIRST}:$C${LAST}+Pagos!$D${FIRST}:$D${LAST}*{TC}))', color=ROJO)
     label(bi["A21"], "MercadoPago pendiente", indent=True)
-    money(bi["B21"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$G${FIRST}:$G${LAST}="")*Pagos!$F${FIRST}:$F${LAST})', color=ROJO)
+    money(bi["B21"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$I${FIRST}:$I${LAST}="")*Pagos!$H${FIRST}:$H${LAST})', color=ROJO)
     label(bi["A22"], "Otros pendientes (préstamo, etc.)", indent=True)
-    money(bi["B22"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$J${FIRST}:$J${LAST}="")*Pagos!$I${FIRST}:$I${LAST})', color=ROJO)
+    money(bi["B22"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$L${FIRST}:$L${LAST}="")*Pagos!$K${FIRST}:$K${LAST})', color=ROJO)
     label(bi["A23"], "✅ DISPONIBLE REAL después de pagar todo", bold=True, bg=CELESTE)
     money(bi["B23"], "=B15-B20-B21-B22", bold=True, size=14, color=VERDE, bg=CELESTE)
     bi.row_dimensions[23].height = 30
     label(bi["A24"], "Comprometido en cuotas de meses futuros (info)", color=GRIS, indent=True)
-    money(bi["B24"], f"=SUMPRODUCT(({PA}>$H$1)*Pagos!$L${FIRST}:$L${LAST})", color=GRIS)
+    money(bi["B24"], f"=SUMPRODUCT(({PA}>$H$1)*Pagos!$N${FIRST}:$N${LAST})", color=GRIS)
 
     header(bi["A26"], "🔎  Control de caja (opcional): contá lo que tenés y compará", bg=AZUL_HEADER)
     header(bi["B26"], "Monto", bg=AZUL_HEADER)
@@ -410,7 +472,7 @@ def main(src, dst):
         cond = f'IF(OR($H{r}<$H$2,$H{r}>$H$1),"",'
         money(bi[f"B{r}"], f'={cond}SUMIFS(Movimientos!$F:$F,Movimientos!$G:$G,$I{r},Movimientos!$B:$B,"Ingreso"))')
         money(bi[f"C{r}"], f'={cond}SUMIFS(Movimientos!$F:$F,Movimientos!$G:$G,$I{r},Movimientos!$B:$B,"Gasto"))')
-        money(bi[f"D{r}"], f'={cond}SUMIFS(Pagos!$L${FIRST}:$L${LAST},{PA},$H{r}))')
+        money(bi[f"D{r}"], f'={cond}SUMIFS(Pagos!$N${FIRST}:$N${LAST},{PA},$H{r}))')
         money(bi[f"E{r}"], f'={cond}SUMIFS(Movimientos!$F:$F,Movimientos!$G:$G,$I{r},Movimientos!$B:$B,"Ahorro"))')
         money(bi[f"F{r}"], f'=IF(B{r}="","",B{r}-C{r}-D{r}-E{r})', bold=True)
         money(bi[f"G{r}"], f'=IF(F{r}="","",$B$4+SUM($F$35:F{r}))', bold=True, color=AZUL_TITULO)
@@ -450,6 +512,7 @@ def main(src, dst):
         "💳 Pagos → una fila por mes con lo que debés pagar de Crédito, MercadoPago y Otros (sale solo de Cuotas).",
         "   Cuando pagás el resumen, escribí la fecha (o ✔) en 'Pagado el' y el importe real en 'Monto real' (si fue distinto a lo calculado: impuestos, comisiones, dólares).",
         "   'Diferencia' te muestra cuánto pagaste de más o de menos respecto de lo cargado en Cuotas: es lo que te falta cargar.",
+        "💵 Dólares: lo que pagás en USD va en Cuotas columna 'Cuota en USD'. Pagos te dice cuántos USD comprar cada mes y en Configuración ponés el dólar del día.",
         "💳 Cuotas → 'Pagadas', 'Faltan', 'Restante ($)' y 'Próxima a pagar' ahora salen de las marcas de Pagos. '⚠️ Atrasada' = hay un mes viejo sin marcar.",
         "📊 Tablero → arriba a la derecha ves Crédito y MercadoPago del mes elegido (con ✅/⏳ según lo hayas pagado) y tu Billetera de hoy.",
         "Circuito sugerido: 1) cargás movimientos a diario · 2) cuando cae el resumen, marcás el pago en Pagos · 3) miras Billetera para saber cuánto te queda.",
