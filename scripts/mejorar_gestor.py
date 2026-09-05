@@ -131,12 +131,14 @@ CUOTAS_NUEVAS = [
     ("Comisión renovación anual Visa + IVA", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 1, 42324.99, None),
     ("Entreno (suplementos)", "Suplementos / Nutrición", "Crédito", date(2026, 9, 6), 1, 53515, None),
     ("MELI 02/08", "Otros gastos", "Crédito", date(2026, 9, 6), 1, 3490, None),
-    ("Impuestos s/ suscripciones USD (IVA 21% + IIBB 3%)", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 12, 11972.70, None),
+    ("Impuestos s/ suscripciones USD (IVA 21% + IIBB 3%)", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 1, 11972.70, None),
+    ("Impuestos s/ suscripciones USD (desde octubre, sin Paramount)", "Impuestos / Comisiones", "Crédito", date(2026, 10, 6), 11, 10575, None),
     ("Impuesto sellos Visa", "Impuestos / Comisiones", "Crédito", date(2026, 9, 6), 12, 1244.29, None),
     ("Saldo resumen anterior sin pagar", "Otros gastos", "Crédito", date(2026, 9, 6), 1, 20483.15, None),
     ("Devolución HBO Max", "Otros gastos", "Crédito", date(2026, 9, 6), 1, -23207.80, None),
-    ("Paramount+", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 3.79),
+    ("Paramount+ (dado de baja)", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 1, None, 3.79),
     ("Hevy Gym", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 2.99),
+    ("Pan de masa madre y yerba", "Supermercado", "Crédito", date(2026, 10, 6), 1, 25900, None),
 ]
 
 # Movimientos: correcciones y altas informadas por el usuario
