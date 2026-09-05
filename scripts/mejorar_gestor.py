@@ -139,6 +139,7 @@ CUOTAS_NUEVAS = [
     ("Paramount+ (dado de baja)", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 1, None, 3.79),
     ("Hevy Gym", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 2.99),
     ("Pan de masa madre y yerba", "Supermercado", "Crédito", date(2026, 10, 6), 1, 25900, None),
+    ("Shorts Monkeyforce", "Ropa / Cuidado personal", "Crédito", date(2026, 10, 6), 6, 33900, None),
 ]
 
 # Movimientos: correcciones y altas informadas por el usuario
