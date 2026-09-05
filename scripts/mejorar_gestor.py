@@ -106,7 +106,7 @@ PAGOS_REALES = [
     ((2026, 8), "J", 202017.61),                 # Mercado Pago cierre 27/07: débito automático del 06/08
     ((2026, 9), "E", "✔"),                       # Visa cierre 27/08: pagada
     ((2026, 9), "F", 1150000),                   # pesos pagados (resumen 1.174.457,23 menos percepción 30 % = 1.150.407,34)
-    ((2026, 9), "G", 32.95),                     # USD pagados sin Anthropic (52,95 − 20)
+    ((2026, 9), "G", 52.95),                     # USD comprados con $ 80.000 (incluye los 20 de Anthropic, que se reintegran)
     ((2026, 9), "I", date(2026, 9, 2)),          # Mercado Pago cierre 27/08: débito automático del 02/09
     ((2026, 9), "J", 273984.72),
 ]
@@ -139,6 +139,14 @@ CUOTAS_NUEVAS = [
     ("Hevy Gym", "Suscripciones (streaming, apps)", "Crédito", date(2026, 9, 6), 12, None, 2.99),
 ]
 
+# Movimientos: correcciones y altas informadas por el usuario
+MOVIMIENTOS_AJUSTES = [("Sueldo", 1458586, "E", "Débito / Banco")]          # (descripción, monto, columna, valor)
+MOVIMIENTOS_NUEVOS = [(date(2026, 9, 4), "Gasto", "Comida / Delivery / Restaurantes", "Cena", "Efectivo", 35500)]
+# Billetera: plata que te deben y facturas previstas del mes (editables)
+POR_COBRAR = [("Reintegro Anthropic (trabajo)", 30600), ("Fiama (Splitwise: Omega 3 y regalos)", 25000)]
+PREVISTOS = [("Luz (Epe) — estimado según agosto", 138226), ("Celular / Internet (Personal) — estimado según agosto", 125000),
+             ("Agua — estimado según agosto", 56261)]
+
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
          "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
@@ -154,7 +162,7 @@ def main(src, dst):
     anio = int(cfg["B3"].value)
     cfg["A4"] = "Dólar (para pasar a pesos lo que pagás en USD):"
     cfg["A4"]._style = copy(cfg["A3"]._style)
-    entrada(cfg["B4"], 1514, fmt='"$ "#,##0')
+    entrada(cfg["B4"], 1511, fmt='"$ "#,##0')   # 80.000 / 52,95 USD
     cfg["D4"] = "◄ ponelo al cambio del día que comprás los dólares"
     cfg["D4"]._style = copy(cfg["D3"]._style)
     hoy = date.today()
@@ -167,6 +175,16 @@ def main(src, dst):
             mov[f"G{r}"] = f'=IF($A{r}="","",TEXT($A{r},"YYYY-MM"))'
         for col in "ABCDEFG":
             mov[f"{col}604"]._style = copy(mov[f"{col}603"]._style)
+    for desc, monto, col, val in MOVIMIENTOS_AJUSTES:
+        for r in range(4, 605):
+            if str(mov[f"D{r}"].value or "").strip().lower() == desc.lower() and mov[f"F{r}"].value == monto:
+                mov[f"{col}{r}"] = val
+                break
+    libre = next(r for r in range(4, 605) if mov[f"A{r}"].value is None)
+    for fila in MOVIMIENTOS_NUEVOS:
+        for col, val in zip("ABCDEF", fila):
+            mov[f"{col}{libre}"] = val
+        libre += 1
     for dv in mov.data_validations.dataValidation:
         if "E4" in str(dv.sqref):
             dv.formula1 = "'Configuración'!$E$7:$E$13"
@@ -440,32 +458,65 @@ def main(src, dst):
     money(bi["B20"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$E${FIRST}:$E${LAST}="")*(Pagos!$C${FIRST}:$C${LAST}+Pagos!$D${FIRST}:$D${LAST}*{TC}))', color=ROJO)
     label(bi["A21"], "MercadoPago pendiente", indent=True)
     money(bi["B21"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$I${FIRST}:$I${LAST}="")*Pagos!$H${FIRST}:$H${LAST})', color=ROJO)
-    label(bi["A22"], "Otros pendientes (préstamo, etc.)", indent=True)
+    label(bi["A22"], "Préstamo / otros pendientes (hoja Pagos)", indent=True)
     money(bi["B22"], f'=SUMPRODUCT(({PA}<=$H$1)*(Pagos!$L${FIRST}:$L${LAST}="")*Pagos!$K${FIRST}:$K${LAST})', color=ROJO)
-    label(bi["A23"], "✅ DISPONIBLE REAL después de pagar todo", bold=True, bg=CELESTE)
-    money(bi["B23"], "=B15-B20-B21-B22", bold=True, size=14, color=VERDE, bg=CELESTE)
-    bi.row_dimensions[23].height = 30
-    label(bi["A24"], "Comprometido en cuotas de meses futuros (info)", color=GRIS, indent=True)
-    money(bi["B24"], f"=SUMPRODUCT(({PA}>$H$1)*Pagos!$N${FIRST}:$N${LAST})", color=GRIS)
+    # filas de los bloques de abajo
+    RC0 = 27                       # "Por cobrar": encabezado
+    RC1, RC2 = RC0 + 1, RC0 + 6    # filas editables
+    RP0 = RC2 + 4                  # "Previstos": encabezado
+    RP1, RP2 = RP0 + 1, RP0 + 6
+    RK0 = RP2 + 3                  # control de caja
+    RT0 = RK0 + 7                  # tabla mensual: título
+    label(bi["A23"], "Facturas e impuestos previstos del mes (bloque de abajo)", indent=True)
+    money(bi["B23"], f"=B{RP2+1}", color=ROJO)
+    label(bi["A24"], "✅ DISPONIBLE REAL después de pagar todo", bold=True, bg=CELESTE)
+    money(bi["B24"], "=B15-B20-B21-B22-B23", bold=True, size=14, color=VERDE, bg=CELESTE)
+    bi.row_dimensions[24].height = 30
+    label(bi["A25"], "Comprometido en cuotas de meses futuros (info)", color=GRIS, indent=True)
+    money(bi["B25"], f"=SUMPRODUCT(({PA}>$H$1)*Pagos!$N${FIRST}:$N${LAST})", color=GRIS)
 
-    header(bi["A26"], "🔎  Control de caja (opcional): contá lo que tenés y compará", bg=AZUL_HEADER)
-    header(bi["B26"], "Monto", bg=AZUL_HEADER)
-    for r, t in ((27, "Efectivo que contaste"), (28, "Banco / débito"), (29, "MercadoPago / billeteras")):
+    header(bi[f"A{RC0}"], "📥  Por cobrar: plata que te deben y todavía no tenés (cuando la recibas, cargala en Movimientos y borrala de acá)", bg=AZUL_HEADER)
+    header(bi[f"B{RC0}"], "Monto", bg=AZUL_HEADER)
+    for i, r in enumerate(range(RC1, RC2 + 1)):
+        entrada(bi[f"A{r}"]); entrada(bi[f"B{r}"], fmt=MONEDA)
+        bi[f"A{r}"].alignment = Alignment(horizontal="left", vertical="center", indent=2)
+        if i < len(POR_COBRAR):
+            bi[f"A{r}"], bi[f"B{r}"] = POR_COBRAR[i]
+    label(bi[f"A{RC2+1}"], "Total por cobrar", bold=True)
+    money(bi[f"B{RC2+1}"], f"=SUM(B{RC1}:B{RC2})", bold=True, color=VERDE)
+    label(bi[f"A{RC2+2}"], "Disponible real si cobrás todo", bold=True, bg=CELESTE)
+    money(bi[f"B{RC2+2}"], f"=B24+B{RC2+1}", bold=True, color=VERDE, bg=CELESTE)
+
+    header(bi[f"A{RP0}"], "📤  Facturas e impuestos previstos del mes (estimación editable; cuando pagues, cargalo en Movimientos y borralo de acá)", bg=AZUL_HEADER)
+    header(bi[f"B{RP0}"], "Monto", bg=AZUL_HEADER)
+    for i, r in enumerate(range(RP1, RP2 + 1)):
+        entrada(bi[f"A{r}"]); entrada(bi[f"B{r}"], fmt=MONEDA)
+        bi[f"A{r}"].alignment = Alignment(horizontal="left", vertical="center", indent=2)
+        if i < len(PREVISTOS):
+            bi[f"A{r}"], bi[f"B{r}"] = PREVISTOS[i]
+    label(bi[f"A{RP2+1}"], "Total previsto", bold=True)
+    money(bi[f"B{RP2+1}"], f"=SUM(B{RP1}:B{RP2})", bold=True, color=ROJO)
+
+    header(bi[f"A{RK0}"], "🔎  Control de caja: contá lo que tenés y compará (si da negativo, hay gastos sin cargar)", bg=AZUL_HEADER)
+    header(bi[f"B{RK0}"], "Monto", bg=AZUL_HEADER)
+    for r, t in ((RK0 + 1, "Efectivo que contaste"), (RK0 + 2, "Banco / débito"), (RK0 + 3, "MercadoPago / billeteras")):
         label(bi[f"A{r}"], t, indent=True)
         entrada(bi[f"B{r}"], fmt=MONEDA)
-    label(bi["A30"], "Total real contado", bold=True)
-    money(bi["B30"], "=SUM(B27:B29)", bold=True)
-    label(bi["A31"], "Diferencia real − teórico (negativo = hay gastos sin cargar)", bold=True, bg=CELESTE)
-    money(bi["B31"], '=IF(B30=0,"",B30-B15)', bold=True, bg=CELESTE)
+    label(bi[f"A{RK0+4}"], "Total real contado", bold=True)
+    money(bi[f"B{RK0+4}"], f"=SUM(B{RK0+1}:B{RK0+3})", bold=True)
+    label(bi[f"A{RK0+5}"], "Diferencia real − teórico", bold=True, bg=CELESTE)
+    money(bi[f"B{RK0+5}"], f'=IF(B{RK0+4}=0,"",B{RK0+4}-B15)', bold=True, bg=CELESTE)
+    bi.conditional_formatting.add(f"B{RK0+5}", CellIsRule(operator="lessThan", formula=["0"], font=Font(color=ROJO, bold=True)))
 
-    header(bi["A33"], "📅  Sobrante mes a mes (año de Configuración)", bg=VERDE)
-    bi.merge_cells("A33:G33")
+    header(bi[f"A{RT0}"], "📅  Sobrante mes a mes (año de Configuración)", bg=VERDE)
+    bi.merge_cells(f"A{RT0}:G{RT0}")
     for i, h in enumerate(["Mes", "Ingresos", "Gastos sueltos", "Cuotas del mes", "Ahorro",
                            "Sobrante del mes", "Acumulado\n(plata propia)"], 1):
-        header(bi.cell(34, i), h)
-    bi.row_dimensions[34].height = 30
+        header(bi.cell(RT0 + 1, i), h)
+    bi.row_dimensions[RT0 + 1].height = 30
+    M1 = RT0 + 2
     for i, nombre in enumerate(MESES, 1):
-        r = 34 + i
+        r = M1 + i - 1
         bi[f"H{r}"] = f"='Configuración'!$B$3*12+{i}"
         bi[f"I{r}"] = f'=TEXT(DATE(\'Configuración\'!$B$3,{i},1),"YYYY-MM")'
         label(bi[f"A{r}"], nombre, bold=True)
@@ -475,19 +526,18 @@ def main(src, dst):
         money(bi[f"D{r}"], f'={cond}SUMIFS(Pagos!$N${FIRST}:$N${LAST},{PA},$H{r}))')
         money(bi[f"E{r}"], f'={cond}SUMIFS(Movimientos!$F:$F,Movimientos!$G:$G,$I{r},Movimientos!$B:$B,"Ahorro"))')
         money(bi[f"F{r}"], f'=IF(B{r}="","",B{r}-C{r}-D{r}-E{r})', bold=True)
-        money(bi[f"G{r}"], f'=IF(F{r}="","",$B$4+SUM($F$35:F{r}))', bold=True, color=AZUL_TITULO)
-    label(bi["A47"], "TOTAL AÑO", bold=True, bg=CELESTE)
+        money(bi[f"G{r}"], f'=IF(F{r}="","",$B$4+SUM($F${M1}:F{r}))', bold=True, color=AZUL_TITULO)
+    M12 = M1 + 11
+    label(bi[f"A{M12+1}"], "TOTAL AÑO", bold=True, bg=CELESTE)
     for c in "BCDEF":
-        money(bi[f"{c}47"], f"=SUM({c}35:{c}46)", bold=True, bg=CELESTE)
-    style(bi["G47"], bg=CELESTE)
-    note(bi, "A48", "Sólo se muestran los meses desde que empezaste a cargar hasta el mes actual. "
-         "'Acumulado' = saldo inicial + sobrantes de cada mes: es tu plata propia si pagás todas las cuotas del mes. "
-         "Coincide con 'Disponible real' menos el fondo Aston Birra.")
-    bi.merge_cells("A48:G48")
-    bi.row_dimensions[48].height = 36
-    bi.conditional_formatting.add("F35:G46", CellIsRule(operator="lessThan", formula=["0"], font=Font(color=ROJO, bold=True)))
-    bi.conditional_formatting.add("B31", CellIsRule(operator="lessThan", formula=["0"], font=Font(color=ROJO, bold=True)))
-    bi.column_dimensions["A"].width = 58
+        money(bi[f"{c}{M12+1}"], f"=SUM({c}{M1}:{c}{M12})", bold=True, bg=CELESTE)
+    style(bi[f"G{M12+1}"], bg=CELESTE)
+    note(bi, f"A{M12+2}", "Sólo se muestran los meses desde que empezaste a cargar hasta el mes actual. "
+         "'Acumulado' = saldo inicial + sobrantes de cada mes: es tu plata propia si pagás todas las cuotas del mes.")
+    bi.merge_cells(f"A{M12+2}:G{M12+2}")
+    bi.row_dimensions[M12 + 2].height = 36
+    bi.conditional_formatting.add(f"F{M1}:G{M12}", CellIsRule(operator="lessThan", formula=["0"], font=Font(color=ROJO, bold=True)))
+    bi.column_dimensions["A"].width = 62
     for c in "BCDEFG":
         bi.column_dimensions[c].width = 17
     bi.column_dimensions["H"].hidden = True
