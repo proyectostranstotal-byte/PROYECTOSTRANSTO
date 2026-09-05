@@ -48,7 +48,7 @@ BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
 
 
 def fill(rgb):
-    return PatternFill("solid", fgColor=rgb)
+    return PatternFill(fill_type="solid", start_color=rgb, end_color=rgb)
 
 
 def style(cell, *, bold=False, size=10, color="FF000000", bg=None, fmt=None,
@@ -209,6 +209,16 @@ def main(src, dst):
     pg.freeze_panes = "C5"
 
     # ----------------------------------------------------------------- Cuotas
+    # Validaciones heredadas rotas (#REF! y una "custom" sin fórmula): Excel las rechaza.
+    from openpyxl.worksheet.datavalidation import DataValidation
+    cuo.data_validations.dataValidation = [
+        dv for dv in cuo.data_validations.dataValidation
+        if not ("B5:C102" in str(dv.sqref) or "F5:G102" in str(dv.sqref))
+    ]
+    for rng, src in (("B5:B102", "'Configuración'!$A$7:$A$34"), ("C5:C102", "'Configuración'!$E$7:$E$13")):
+        dv = DataValidation(type="list", formula1=src, allow_blank=True, showErrorMessage=False)
+        dv.add(rng)
+        cuo.add_data_validation(dv)
     cuo["A2"] = ("Completá sólo lo amarillo (A–F). El total, el período y el estado se calculan solos y cada cuota "
                  "se suma al Tablero y al Resumen del mes que corresponde. 'Pagadas' y 'Faltan' salen de las marcas "
                  "que hacés en la hoja Pagos cuando pagás cada tarjeta.")
@@ -414,6 +424,7 @@ def main(src, dst):
              "Aston Birra", "Configuración", "Instrucciones"]
     wb._sheets = [wb[n] for n in orden]
     wb.active = orden.index("Tablero")
+    wb.calculation.fullCalcOnLoad = True
     wb.save(dst)
     print("Guardado:", dst)
 
