@@ -223,9 +223,11 @@ def main(src, dst):
                  "se suma al Tablero y al Resumen del mes que corresponde. 'Pagadas' y 'Faltan' salen de las marcas "
                  "que hacés en la hoja Pagos cuando pagás cada tarjeta.")
     cuo["K4"] = "Faltan"
-    for tc in cuo.tables["Tabla_1"].tableColumns:
-        if tc.name == "Restante":
-            tc.name = "Faltan"
+    # La "Tabla_1" y el autofiltro que exportó Google Sheets se superponen en A4:L102 y
+    # Excel los rechaza al abrir ("Característica quitada: Tabla"). Se dejan como rango común.
+    if "Tabla_1" in cuo.tables:
+        del cuo.tables["Tabla_1"]
+    cuo.auto_filter.ref = None
     cuo["P4"] = "Restante ($)"
     cuo["Q4"] = "Próxima a pagar"
     for c in ("P4", "Q4"):
