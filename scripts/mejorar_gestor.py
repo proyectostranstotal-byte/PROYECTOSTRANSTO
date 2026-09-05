@@ -110,6 +110,12 @@ PAGOS_REALES = [
     ((2026, 9), "H", 273984.72),
 ]
 
+# Correcciones de filas de Cuotas confirmadas por el usuario contra los resúmenes: (descripción, columna, valor nuevo)
+AJUSTES_CUOTAS = [
+    ("Omega 3", "C", "MercadoPago"), ("Omega 3", "F", 26412.5),        # MP 06/08 ML 52.825 en 2 cuotas, mitad cada uno con su novia
+    ("Regalo benja", "C", "MercadoPago"), ("Regalo benja", "F", 17449.12),  # MP 02/08 Distrimicabeb 34.898,23 en 2, mitad cada uno
+]
+
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
          "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
@@ -236,6 +242,10 @@ def main(src, dst):
     pg.freeze_panes = "C5"
 
     # ----------------------------------------------------------------- Cuotas
+    for desc, col, val in AJUSTES_CUOTAS:
+        for r in range(5, 103):
+            if str(cuo[f"A{r}"].value or "").strip().lower() == desc.lower():
+                cuo[f"{col}{r}"] = val
     # Validaciones heredadas rotas (#REF! y una "custom" sin fórmula): Excel las rechaza.
     from openpyxl.worksheet.datavalidation import DataValidation
     cuo.data_validations.dataValidation = [
