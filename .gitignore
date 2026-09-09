@@ -12,3 +12,8 @@ __pycache__/
 
 # SICOP: datos regenerables con datos personales (no versionar)
 sicop/data/
+
+# WhatsApp (whatsapp-web.js): sesión y dependencias, no versionar
+sicop/whatsapp/node_modules/
+sicop/whatsapp/.wwebjs_auth/
+sicop/whatsapp/.wwebjs_cache/

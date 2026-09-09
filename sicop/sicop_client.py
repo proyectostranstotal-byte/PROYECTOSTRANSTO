@@ -65,8 +65,11 @@ class SicopClient:
         self.cj = os.path.join(self.wd, 'cookies.txt')
 
     def _curl(self, args):
-        base = ['curl', '-sS', '--cacert', self.ca, '-c', self.cj, '-b', self.cj, '-A', UA]
-        proxy = os.environ.get('HTTPS_PROXY')
+        base = ['curl', '-sS', '-c', self.cj, '-b', self.cj, '-A', UA]
+        # Solo usar --cacert si hay un bundle (entorno con proxy). En una PC normal
+        # curl usa el almacén de certificados del sistema.
+        if self.ca and os.path.exists(self.ca):
+            base += ['--cacert', self.ca]
         return subprocess.run(base + args, capture_output=True, text=True)
 
     def _parse(self, path):
@@ -118,11 +121,21 @@ class SicopClient:
             if c and tok: mp[c.group(1)] = tok.group(1)
         return mp
 
-    def descargar_estado(self, contratista_cuit, cuit, outfile):
-        """Descarga el Estado de Situación (.xlsx) de un proveedor. Devuelve outfile o lanza."""
+    def descargar_estado(self, contratista_cuit, cuit, outfile, reintentos=2):
+        """Descarga el Estado de Situación (.xlsx) de un proveedor. Devuelve outfile o lanza.
+
+        La sesión de SICOP expira rápido y a veces la grilla vuelve vacía; ante eso
+        se vuelve a loguear y se reintenta.
+        """
         p = lambda n: os.path.join(self.wd, n)
-        mp = self._filtrar(contratista_cuit)
-        tok = mp.get(cuit)
+        tok = None
+        for intento in range(1, reintentos + 1):
+            mp = self._filtrar(contratista_cuit)
+            tok = mp.get(cuit)
+            if tok:
+                break
+            if intento < reintentos:
+                self.login()  # re-login y reintentar
         if not tok:
             raise RuntimeError(f'CUIT {cuit} no está en la grilla del contratista {contratista_cuit}')
         edurl = BASE + '/Privado/Proveedores/ProveedorEdit.aspx?prosta=' + tok
