@@ -1,0 +1,51 @@
+========================================================================
+  RECORDATORIOS DE VENCIMIENTOS POR WHATSAPP  -  Guia simple
+========================================================================
+
+Que hace esto:
+  Todos los dias revisa en SICOP la documentacion de los choferes
+  (Barrionuevo, Costanzo, Wegner) y le manda un WhatsApp al que tenga algo
+  por vencer. Si un WhatsApp no se puede enviar, avisa por mail.
+
+------------------------------------------------------------------------
+  ANTES DE EMPEZAR (una sola vez)
+------------------------------------------------------------------------
+Necesitas en la PC:
+  - Node.js  ->  https://nodejs.org  (boton "LTS", instalar con Siguiente)
+  - Python   ->  https://www.python.org/downloads  (tildar "Add to PATH")
+
+Y el archivo "contactos.json" que te paso por chat: guardalo en la carpeta
+    sicop\data\
+(si no existe la carpeta "data" dentro de "sicop", creala.)
+
+------------------------------------------------------------------------
+  PASOS (hace doble clic, en orden)
+------------------------------------------------------------------------
+  PASO 1 - INSTALAR Y CONFIGURAR
+     Instala todo, te pide las contrasenas (SICOP y Outlook) y te muestra
+     un codigo QR. Escanealo con el telefono del numero de WhatsApp que
+     vas a usar (WhatsApp > Dispositivos vinculados > Vincular dispositivo).
+     Esperá hasta que diga "Listo".
+
+  PASO 3 - PROBAR CON UN CHOFER  (recomendado la primera vez)
+     Manda un WhatsApp de prueba solo a Wegner. Fijate que llegue bien.
+
+  PASO 2 - ENVIAR AHORA
+     Hace el envio completo a mano, cuando vos quieras.
+
+  PASO 4 - AGENDAR TODOS LOS DIAS
+     Deja el envio automatico a las 09:00. La PC tiene que quedar
+     prendida y con internet a esa hora.
+
+------------------------------------------------------------------------
+  SI ALGO FALLA
+------------------------------------------------------------------------
+  - Aparece de nuevo el QR: se cerro la sesion. Corre otra vez el PASO 1.
+  - "python no se reconoce" / "node no se reconoce": falto instalar Python
+    o Node (ver arriba), o reinicia la PC despues de instalarlos.
+  - No llega un WhatsApp: el sistema manda solo un mail de aviso a
+    control@transtotal.com.ar con el detalle.
+
+El numero de WhatsApp que uses aca es INDEPENDIENTE del bot de jornada:
+no se pisan.
+========================================================================
