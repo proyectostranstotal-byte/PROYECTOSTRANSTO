@@ -23,15 +23,16 @@ Y el archivo "contactos.json" que te paso por chat: guardalo en la carpeta
 ------------------------------------------------------------------------
   PASO 1 - INSTALAR Y CONFIGURAR
      Instala todo, te pide las contrasenas (SICOP y Outlook) y te muestra
-     un codigo QR. Escanealo con el telefono del numero de WhatsApp que
-     vas a usar (WhatsApp > Dispositivos vinculados > Vincular dispositivo).
+     un codigo QR. Escanealo con el telefono del numero que vas a usar
+     (WhatsApp > Dispositivos vinculados > Vincular dispositivo).
      Esperá hasta que diga "Listo".
 
-  PASO 3 - PROBAR CON UN CHOFER  (recomendado la primera vez)
-     Manda un WhatsApp de prueba solo a Wegner. Fijate que llegue bien.
+  PASO 2 - PROBAR (a tu numero)   (hacelo la primera vez)
+     Te pide TU numero y te manda un WhatsApp de prueba a vos mismo.
+     Asi verificas que quedo bien vinculado, sin molestar a ningun chofer.
 
-  PASO 2 - ENVIAR AHORA
-     Hace el envio completo a mano, cuando vos quieras.
+  PASO 3 - ENVIAR AHORA
+     Hace el envio completo de verdad (a los choferes), cuando vos quieras.
 
   PASO 4 - AGENDAR TODOS LOS DIAS
      Deja el envio automatico a las 09:00. La PC tiene que quedar
