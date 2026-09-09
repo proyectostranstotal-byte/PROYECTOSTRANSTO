@@ -21,6 +21,10 @@ BARRIONUEVO CESAR CEFERINO, COSTANZO MATIAS MANUEL, WEGNER CLAUDIO.
    si a los 5 días no se actualizó, lo reenvía; si el documento se renovó, lo resuelve.
 5. **Envío por WhatsApp** (`whatsapp/`, Node + `whatsapp-web.js`): agrupa los avisos
    pendientes por chofer en un solo mensaje y los manda por WhatsApp Web.
+6. **Aviso por mail de fallos** (`notificar_fallos.py` + `mailer.py`): si un WhatsApp
+   no se pudo enviar (número sin WhatsApp, sesión caída, sin teléfono), manda un mail
+   a `control@transtotal.com.ar` desde la cuenta de Outlook avisando, con el texto
+   que debía enviarse, para contactar al chofer por otro medio.
 
 ## Arquitectura de dos partes
 
@@ -49,6 +53,13 @@ npm install
 npm run auth                              # escanear el QR con el teléfono
 ```
 
+La sesión de WhatsApp de este proyecto es **independiente** (vive en
+`sicop/whatsapp/.wwebjs_auth`), así que podés vincular un número distinto al del bot
+de jornada sin que se pisen.
+
+Para el aviso por mail, configurar además `OUTLOOK_USER` / `OUTLOOK_PASS` en
+`sicop/.env` (ver `.env.example`).
+
 Formato de teléfono en `contactos.json`: solo los **10 dígitos** (sin 0, sin 15).
 El `549` y el sufijo `@c.us` los arma el código.
 
@@ -66,6 +77,7 @@ node enviar.js                       # envío real
 cd ../..
 
 python3 -m sicop.marcar_enviados   # marca en la base los efectivamente enviados
+python3 -m sicop.notificar_fallos  # avisa por mail los que no se pudieron enviar
 ```
 
 En Windows, `sicop/whatsapp/ciclo_completo.bat` hace todo el ciclo; agendalo en el
@@ -81,8 +93,10 @@ Reportes: `python3 -m sicop.importar` (resumen en pantalla) y
 - ✅ Base con 61 documentos y sus vencimientos.
 - ✅ Motor de recordatorios (15 días / reenvío a los 5 / resolución por renovación).
 - ✅ Envío por WhatsApp integrado (whatsapp-web.js, con reintentos y modo prueba).
-- ⏳ **Falta cargar los teléfonos** de los 3 choferes en `data/contactos.json`.
-  Hasta entonces `generar_cola` los marca como "sin teléfono" y no se envían.
+- ✅ Teléfonos de los 3 choferes cargados en `data/contactos.json` (local, no versionado).
+- ✅ Aviso por mail a `control@transtotal.com.ar` cuando un WhatsApp falla.
+- ⏳ **Falta** vincular la sesión de WhatsApp en la PC (`npm run auth`) y cargar las
+  credenciales de Outlook para el aviso por mail.
 
 ## Seguridad y datos
 
