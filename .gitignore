@@ -3,3 +3,12 @@
 *.xlsm
 *.csv
 __pycache__/
+
+# SICOP: credenciales y estado de sesión (NO versionar)
+sicop/.env
+sicop/**/cookies.txt
+*.env.local
+__pycache__/
+
+# SICOP: datos regenerables con datos personales (no versionar)
+sicop/data/
