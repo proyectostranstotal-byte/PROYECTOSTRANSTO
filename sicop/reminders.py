@@ -14,6 +14,24 @@ from . import db as dbm
 DIAS_AVISO = 15
 DIAS_REENVIO = 5
 
+# No molestar por estos documentos (coincidencia por texto, sin distinguir may/min).
+# Ej.: la patente es un impuesto del vehículo que no se persigue como los papeles de
+# cumplimiento (ART, libreta, seguros).
+ITEMS_IGNORADOS = ['patente']
+
+# Vencidos "muy viejos": si pasó más de esto desde el vencimiento, se desestima
+# (se asume abandonado/gestionado por fuera). Los vencidos recientes siguen avisando.
+DIAS_VENCIDO_MAX = 365
+
+
+def ignorar(item, dias):
+    it = (item or '').lower()
+    if any(k in it for k in ITEMS_IGNORADOS):
+        return True
+    if dias is not None and dias < -DIAS_VENCIDO_MAX:
+        return True
+    return False
+
 def _d(iso):
     return datetime.date.fromisoformat(iso) if iso else None
 
@@ -48,6 +66,8 @@ def evaluar(con, today=None, destino_por_fletero=None):
         # ventana: vencido o vence dentro de DIAS_AVISO. (sin fecha => avisar también)
         en_ventana = (dias is None) or (dias <= DIAS_AVISO)
         if not en_ventana:
+            continue
+        if ignorar(doc['item'], dias):
             continue
         key = f"{doc['fletero_cuit']}|{doc['recurso']}|{doc['identificador']}|{doc['item']}"
         rec = con.execute("SELECT * FROM recordatorios WHERE doc_key=?", (key,)).fetchone()
