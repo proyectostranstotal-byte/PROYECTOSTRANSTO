@@ -48,3 +48,12 @@ Es un maestro simple, sin claves útiles para el cruce. AIR LIQUIDE es el códig
 1. Pedir la exportación de detalle de OT (Id OT + código de artículo o descripción del trabajo).
 2. Con eso, armar la matriz patente × ítem con las OT que respaldan cada punto, más el motivo de las 20 OT en Diagnóstico.
 3. Definir si las 6 unidades Air Liquide que quedaron fuera de la lista se suman a la auditoría.
+
+## Reparaciones por OT (`reparaciones_por_ot.py`)
+Con los exports buenos de Copérnico (`ordenes_completo.xls`, `tareas_ot.txt`, `items_remitos.txt`), cada OT queda como
+"OT N° · patente · qué se le hizo · repuestos que se le pusieron". El vínculo con los repuestos es
+`Cbte.Venta` RS-AAAA-N ↔ remito de salida RSM-R-AAAA-N.
+
+    python reparaciones_por_ot.py <carpeta_exports> 2026-08-01 2026-09-30 Reparaciones_flota.xlsx
+
+Agosto y septiembre de 2026 (el export llega al 10/09): 148 OT de la flota. De ellas, 86 tienen repuestos, y las 12 sin tareas son todas OT abiertas en diagnóstico.
