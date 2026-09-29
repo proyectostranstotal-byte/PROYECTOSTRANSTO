@@ -57,3 +57,9 @@ Con los exports buenos de Copérnico (`ordenes_completo.xls`, `tareas_ot.txt`, `
     python reparaciones_por_ot.py <carpeta_exports> 2026-08-01 2026-09-30 Reparaciones_flota.xlsx
 
 Agosto y septiembre de 2026 (el export llega al 10/09): 148 OT de la flota. De ellas, 86 tienen repuestos, y las 12 sin tareas son todas OT abiertas en diagnóstico.
+
+## OT relacionadas con el checklist (`ot_vs_checklist.py`)
+Clasifica cada tarea y cada repuesto de las OT contra los puntos del checklist de auditoría y deja solo las OT que tocan al menos uno. Muestra únicamente los renglones relacionados.
+Criterios: los controles "para VTV" cuentan como R.T.O. En "Auxiliares" entran las ruedas de auxilio, pero no los faros ni los espejos auxiliares. Las mangueras de vigía (sistema de inflado) no cuentan como mangueras de la cisterna.
+
+    python ot_vs_checklist.py <carpeta_exports> 2026-08-01 2026-09-30 OT_checklist.xlsx
