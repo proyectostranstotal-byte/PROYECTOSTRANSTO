@@ -1,6 +1,6 @@
 # Búsqueda laboral periódica – Fiama Anfuso
 
-Plantilla para repetir la búsqueda cada 3 o 4 días. Cada vez: (1) pegar este archivo completo en el chat con Claude o en Claude en Chrome, (2) recibir solo los avisos NUEVOS, (3) agregar los nuevos al registro de abajo con la fecha.
+Plantilla para repetir la búsqueda cada 3 o 4 días. Cada vez: (1) pegar este archivo completo en el chat con Claude o en Claude en Chrome, (2) recibir solo los avisos NUEVOS, (3) recibir el mensaje listo para reenviarle a Fiama con los links de postulación, (4) agregar los nuevos al registro de abajo con la fecha.
 
 Última búsqueda: 05/10/2026 (anteriores: 02/10/2026, 30/09/2026).
 
@@ -32,12 +32,15 @@ Notas de acceso (05/10): Bumeran y ZonaJobs comparten la misma base de avisos (a
 
 **Formato de respuesta:** devolver TODOS los avisos nuevos, ordenados por afinidad (alta / media / baja) y dentro de cada grupo por fecha, más recientes primero. Para cada uno: título, empresa o consultora, localidad, fuente, fecha de publicación y antigüedad, requisitos de formación y experiencia (aclarar si no pide universitario), por qué encaja con el perfil, y link directo de postulación (o mail/WhatsApp si es la vía de contacto). Al final: descartados con motivo en una línea, avisos del registro que ya no están publicados (para darlos de baja), y fuentes que no se pudieron consultar.
 
+**Mensaje para Fiama (entregar siempre, además del informe):** armar un segundo texto listo para copiar y pegar en WhatsApp, dirigido a Fiama, en tono cercano y en español rioplatense. Estructura: saludo breve; "🔵 PRIORIDAD ALTA (postular ya)" con los avisos de afinidad alta numerados, cada uno con título, empresa, localidad, fecha, dos líneas de requisitos en lenguaje simple y el link directo en una línea aparte (sin formato markdown, URL pelada para que WhatsApp la haga clickeable); "🟡 PRIORIDAD MEDIA (postular esta semana)" con los de afinidad media, solo título, empresa, localidad, fecha y link; "🟢 SIGUEN ABIERTAS DE LA SEMANA PASADA" con los avisos del registro de afinidad alta que siguen vigentes y a los que todavía no se postuló (estado distinto de "postulada"); cierre con consejos cortos y pedido de que avise a cuáles se postuló. No incluir los de afinidad baja ni los descartados. Si un aviso no tiene link, poner el mail o WhatsApp de contacto. Guardar el mensaje como `mensaje-fiama-<fecha>.md`.
+
 ---
 
 ## 2. Qué hacer después de cada búsqueda
 
+- Reenviar a Fiama el mensaje generado (archivo `mensaje-fiama-<fecha>.md`).
 - Copiar los avisos nuevos a la tabla de la sección 3 con la fecha de la búsqueda.
-- Marcar en la columna Estado los que ya no aparecen publicados ("cerrado") o a los que Fiama ya se postuló ("postulada").
+- Marcar en la columna Estado los que ya no aparecen publicados ("cerrado") o a los que Fiama ya se postuló ("postulada"), así no vuelven a salir en el bloque "siguen abiertas" del mensaje.
 - Actualizar la línea "Última búsqueda" al principio del archivo.
 
 ---
