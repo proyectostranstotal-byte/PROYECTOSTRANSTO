@@ -2,7 +2,7 @@
 
 Plantilla para repetir la búsqueda cada 3 o 4 días. Cada vez: (1) pegar este archivo completo en el chat con Claude o en Claude en Chrome, (2) recibir solo los avisos NUEVOS, (3) recibir el mensaje listo para reenviarle a Fiama con los links de postulación, (4) agregar los nuevos al registro de abajo con la fecha.
 
-Última búsqueda: 06/10/2026 (anteriores: 05/10/2026, 02/10/2026, 30/09/2026).
+Última búsqueda: 07/10/2026 (anteriores: 06/10/2026, 05/10/2026, 02/10/2026, 30/09/2026).
 
 ---
 
@@ -24,7 +24,7 @@ Hacé una investigación exhaustiva de ofertas laborales vigentes en el cordón 
 
 Notas de acceso (05/10): Bumeran y ZonaJobs comparten la misma base de avisos (alcanza con revisar uno; los listados HTML vienen vacíos, funciona su API interna /api/avisos/searchV2). Computrabajo no se lee con WebFetch pero sí con curl; URLs válidas: `trabajo-de-<palabra>-en-santa-fe-en-rosario` y `empleos-en-santa-fe-en-<localidad>`. Sitio Empleos: el detalle sale de `busquedas_detalle_ajax.php?id=<id>`. Indeed, Glassdoor y OpcionEmpleo bloquean con captcha; Empleos Clarín está discontinuado; el Portal de Empleo de Santa Fe requiere Clave Fiscal.
 
-Notas de acceso (06/10): la API de Bumeran devuelve 0 resultados desde servidores fuera de Argentina; alternativa que funcionó: anteponer `https://r.jina.ai/` a la URL del listado (ej. `https://r.jina.ai/https://www.bumeran.com.ar/en-santa-fe/empleos-busqueda-calidad.html?recientes=true`), que devuelve la página renderizada con fechas y links. Computrabajo acepta `?pubdate=7` (últimos 7 días) y `?p=2` para paginar. Jooble devuelve 403 a curl pero se lee con WebFetch. Sitio Empleos: el listado completo ordenado por fecha sale de `busquedas_ajax.php?page=N&cat=0&tiempo=&q=&ciudad=&recom=0`. Municipalidad de Rosario: el listado no se puede leer; probar IDs consecutivos en `empleos/x_<id>.html` (el slug es indiferente; un aviso cerrado muestra "Búsqueda finalizada" y uno abierto "Quiero postularme"); el 06/10 el último ID con contenido era 1159. Un aviso de Computrabajo dado de baja redirige al listado general (sirve para detectar cerrados).
+Notas de acceso (06/10): la API de Bumeran devuelve 0 resultados desde servidores fuera de Argentina; alternativa que funcionó: anteponer `https://r.jina.ai/` a la URL del listado (ej. `https://r.jina.ai/https://www.bumeran.com.ar/en-santa-fe/empleos-busqueda-calidad.html?recientes=true`), que devuelve la página renderizada con fechas y links. Computrabajo acepta `?pubdate=7` (últimos 7 días) y `?p=2` para paginar. Jooble devuelve 403 a curl pero se lee con WebFetch. Sitio Empleos: el listado completo ordenado por fecha sale de `busquedas_ajax.php?page=N&cat=0&tiempo=&q=&ciudad=&recom=0`. Municipalidad de Rosario: el listado no se puede leer; probar IDs consecutivos en `empleos/x_<id>.html` (el slug es indiferente; un aviso cerrado muestra "Búsqueda finalizada" y uno abierto "Quiero postularme"); el 07/10 el último ID con contenido seguía siendo 1159 (el 1158 apareció ese día). Un aviso de Computrabajo dado de baja redirige al listado general (sirve para detectar cerrados).
 
 **Filtros:**
 1. Solo avisos vigentes. Priorizar los publicados en los últimos 10 días, pero incluir los más antiguos si siguen abiertos, indicando la fecha.
@@ -184,7 +184,7 @@ Informe completo con requisitos y motivos: `informe-busqueda-fiama-2026-10-05.md
 | 05/10 | Operarios metalúrgicos Sector Chapería Pérez | Grupo Gestión | Pérez | Jooble | https://ar.jooble.org/desc/-928659962102364934 | abierto (hace 2 meses, baja) |
 | 05/10 | Operario/a de Ensamble – Granadero Baigorria (eventual) | Grupo Gestión | Granadero Baigorria | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operarioa-de-ensamble-granadero-baigorria-en-granadero-baigorria-9EDC6B7D0401B00161373E686DCF3405 | abierto (05/10, baja) |
 | 05/10 | Operario eventual en Granadero Baigorria | Ceta Capital Humano | Granadero Baigorria | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operario-eventual-en-granadero-baigorria-en-granadero-baigorria-54647092832D333361373E686DCF3405 | abierto (01/10, baja) |
-| 05/10 | Operario sector Moldeo y Poliuretano | Consultores de Empresas | Rosario | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operario-para-el-sector-de-moldeo-y-poliuretano-en-rosario-BD2788944F491F5A61373E686DCF3405 | abierto (04/10, baja; edad 19-27) |
+| 05/10 | Operario sector Moldeo y Poliuretano | Consultores de Empresas | Rosario | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operario-para-el-sector-de-moldeo-y-poliuretano-en-rosario-BD2788944F491F5A61373E686DCF3405 | cerrado 07/10 (el link redirige al listado) |
 | 05/10 | Operario de producción sector vidrios (CNC de corte) | Consultores de Empresas | Rosario | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operario-de-produccion-en-sector-vidrios-en-rosario-A90B2D9B5B3B12DB61373E686DCF3405 | abierto (05/10, baja) |
 | 05/10 | Operario industrial zona norte | Importante empresa | Rosario | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operario-industrial-en-ciudad-de-rosario-zona-norte-en-rosario-5F635B1091F9C86C61373E686DCF3405 | abierto (02/10, baja) |
 | 05/10 | Operario Metalúrgico Maquinista (corte y flejado de chapas, calibre) | Importante empresa metalúrgica | Rosario | Jooble | https://ar.jooble.org/desc/-1569207266974551687 | abierto (hace 2 meses, baja) |
@@ -223,6 +223,25 @@ Postulaciones 06/10/2026: Fiama se postuló a los 22 avisos del mensaje del 06/1
 
 Cerrados o dados de baja al 06/10/2026: Auxiliar de Gestión de Calidad (Ezequiel Pereyra). Reabierto: Técnico mecánico / electromecánico / químico – tareas generales (Consultores). Verificados como abiertos: los 32 avisos restantes de Computrabajo del registro, Cargill, Bunge, Servicemen (ambos), LOZAMETAL, Responsable de Calidad Pérez, Gemplast, Ceta 608 y 609, SKF, Sullair, Técnico de Garantías, NEO-BIZ, Rocktree, Municipalidad 1136 y 1145, todos los Randstad, Taxia, HEFESTO, Pierandrei, NOS Pérez, Grupo Gestión ensamble zona sur. Sin verificar: Milicic Analista de Oficina Técnica, DETEXA, Flexocolor, PROGLOBAL, Grupo Quijada.
 
+### Búsqueda del 07/10/2026
+
+Informe completo con requisitos y motivos: `informe-busqueda-fiama-2026-10-07.md`. Mensaje enviado: `mensaje-fiama-2026-10-07.md`.
+
+| Encontrado | Título | Empresa / consultora | Localidad | Fuente | Link | Estado |
+|---|---|---|---|---|---|---|
+| 07/10 | Técnico de Servicios (inspecciones END: PT, MT, ultrasonido; técnico mecánico, 2 años, inglés intermedio, viajes) | SKF Argentina | Rosario | HiringRoom SKF / Bumeran | https://skf.hiringroom.com/jobs/get_vacancy/6ac64a910bc162c70cb1663c | abierto (07/10, alta) |
+| 07/10 | Operarios de Chapería: Plegado y Corte Láser (planos, calibre, goniómetro; hasta 35) | LAUGE EQUIPAMIENTOS SRL | Rosario | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-operarios-de-chaperia-plegado-y-corte-laser-rosario-chaperia-en-rosario-2C8781511C16CEC761373E686DCF3405 | abierto (06/10, media) |
+| 07/10 | Líder de Producción (planos, instrumentos de precisión, coordinar equipos; plazo fijo) | Consultores de Empresas | Villa Gobernador Gálvez (a definir) | Computrabajo | https://ar.computrabajo.com/ofertas-de-trabajo/oferta-de-trabajo-de-lider-de-produccion-en-villa-gdor-galvez-600A0350B616267E61373E686DCF3405 | abierto (06/10, media) |
+| 07/10 | Técnico de mantenimiento mecánico (título técnico excluyente; hidráulica, rodamientos, SAP; turnos) | Gemplast Argentina | Pérez | LinkedIn | https://ar.linkedin.com/jobs/view/t%C3%A9cnico-de-mantenimiento-mec%C3%A1nico-at-gemplast-argentina-4475125886 | abierto (06/10, media; probablemente misma vacante que NOS Pérez) |
+| 07/10 | Operador(a) de Preparación eventual (secundario técnico; muestreo, laboratorio, equipos; turnos) | Cargill | Villa Gobernador Gálvez | careers.cargill.com | https://careers.cargill.com/es/trabajo/galvez/operador-a-de-preparacion-eventual-villa-gobernador-galvez/31241/101624501472 | abierto (06/10, media) |
+| 07/10 | Técnico Mecánico (diseño de piezas a medida; SolidWorks excluyente; ingreso febrero) | Consultores de Empresas | Villa Gobernador Gálvez (a definir) | Jobiis 151667 | https://www.jobiis.com/jobs-list/151667?country=ARG | abierto (~06/10, baja) |
+| 07/10 | Técnico en lectura y realización de planos (3D, SolidWorks; dibujante excluyente) | fábrica de aberturas | Rosario | Municipalidad de Rosario 1158 | https://empleo.produccionrosario.gob.ar/empleos/tecnico-en-lectura-y-realizacion-de-planos_1158.html | abierto (07/10, baja) |
+| 07/10 | Ayudantes metalúrgicos (turnos tarde/noche, contrato por proyecto) | Consultores de Empresas | Rosario (a definir) | Jobiis 151673 | https://www.jobiis.com/jobs-list/151673?country=ARG | abierto (~06/10, baja) |
+
+Descartados el 07/10/2026 (detalle en el informe): Ingeniero de Confiabilidad (SKF, ingeniería y 10 años); Ingeniero/a de Confiabilidad Jr (Louis Dreyfus General Lagos, ingeniería mecánica); Técnico de Mantenimiento Eléctrico Industrial (San Lorenzo, eléctrico/PLC); Jefe de Planta (Amarilla Gas, jefatura); Montadores de Estructuras Metálicas (FLEXIO, obra en altura); Operario producción (Funcional Foods, alimentos); Operario de recepción y expedición (RRHH Buro), Operarios de depósito (Grupo Gestión), Empleado de depósito (NOS), Operario de Logística (Sitio Empleos 8138): logística; Operador(a) de Limpieza Industrial (Cargill VGG); Supervisor de Producción y Planificador de Confiabilidad (Bunge, Buenos Aires); Electricista de Vehículos (Alsa); Diseñador de Producto Mecánico (Uplin HR, ciudad de Santa Fe); Ingeniero Mecánico (Paladini); Plegador (Sitio Empleos 8079, mismo texto que el 8078).
+
+Cerrados o dados de baja al 07/10/2026: Operario sector Moldeo y Poliuretano (Consultores de Empresas). Verificados como abiertos: los otros 37 avisos de Computrabajo del registro, Municipalidad 1136 y 1145, los 10 de Randstad (Operario/a de producción Pérez vence el 13/10). No quedan avisos de prioridad alta sin postular de búsquedas anteriores.
+
 ### Descartados el 30/09/2026 (no volver a listar salvo que cambien los requisitos)
 
 | Título | Empresa / consultora | Motivo |
@@ -253,5 +272,6 @@ Inspector/a de Calidad en línea de terminación (Randstad, refrigeración) · S
 | 02/10/2026 | 20 | Solo Jooble y Randstad legibles; Computrabajo/Bumeran/LinkedIn pendientes con Claude en Chrome |
 | 05/10/2026 | 52 (9 alta, 20 media, 23 baja) | Cubiertos Computrabajo, Bumeran/ZonaJobs, LinkedIn, Jooble, Talent, Jobiis, Randstad, Ceta, Cargill, Bunge, Sitio Empleos, Municipalidad de Rosario. Pendientes con Claude en Chrome: Indeed y Glassdoor (verificar Flexocolor, DETEXA, Minerva, YPF) |
 | 06/10/2026 | 7 (1 alta, 3 media incl. 1 reabierto, 3 baja) | Un solo día desde la anterior. Cubiertos Computrabajo, Bumeran/ZonaJobs (vía r.jina.ai), Jooble, LinkedIn, Randstad, Ceta, Jobiis, Sitio Empleos, Municipalidad de Rosario, Cargill, Bunge, SKF, Neo-Biz. Pendientes con Claude en Chrome: Indeed y Glassdoor (DETEXA, Flexocolor, Minerva, YPF); portales Viterra, LDC, COFCO, ACA, Sika, John Deere, CLAAS, Metalfor sin revisar |
+| 07/10/2026 | 8 (1 alta, 4 media, 3 baja) | Un día desde la anterior. Cubiertos Computrabajo, Bumeran/ZonaJobs (vía r.jina.ai), Jooble, LinkedIn, Randstad, Ceta, Jobiis, Sitio Empleos, Municipalidad, Cargill, Bunge, SKF. Pendientes: Indeed, Glassdoor, Talent; portales Viterra, COFCO, ACA, Sika, Minerva, John Deere, CLAAS, Metalfor, Acindar |
 | 09/10/2026 o 10/10/2026 | | |
 | | | |
