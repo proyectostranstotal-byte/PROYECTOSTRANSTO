@@ -7,10 +7,10 @@ Artefacto: https://claude.ai/artifact/CKkGt8UCiNGHGtLGCwfAMs (publicado el 22/10
 
 ## Tarea programada "Chequeo bots Transtotal"
 
-Se crea desde la app de escritorio en la PC `NDIFABIO` (necesita `device_bash` y las carpetas `C:\jornada-bot`, `C:\SICOP\sicop\whatsapp\logs` y `C:\ExcesosVelocidad\logs` conectadas). Lunes a sábado 14:37 (America/Argentina/Buenos_Aires), modo automático, aviso por push. Prompt:
+Se crea desde la app de escritorio en la PC `NDIFABIO` (necesita `device_bash` y las carpetas `C:\jornada-bot`, `C:\SICOP\sicop\whatsapp\logs` y `C:\ExcesosVelocidad\logs` conectadas). Lunes a sábado, cada hora de 08:37 a 15:37 (America/Argentina/Buenos_Aires, cron `37 8-15 * * 1-6`), modo automático, aviso por push. Prompt:
 
 ```
-Chequeo diario de los bots y de la flota de Transtotal. Respondé en español y en forma breve.
+Chequeo de los bots y de la flota de Transtotal (corre cada hora, de 08:37 a 15:37). Respondé en español y en forma breve.
 
 1. BOTS. Con device_bash, leé las últimas líneas de estos logs (fechas en formato YYYYMMDD):
    - C:\jornada-bot\logs\controlar-excesos_<HOY>.log → OK si contiene "MAIL: enviado". Anotá los excesos de jornada y de manejo.
@@ -20,6 +20,7 @@ Chequeo diario de los bots y de la flota de Transtotal. Respondé en español y 
    - El semanal_*.log más reciente en C:\ExcesosVelocidad\logs → OK si es del último lunes y pesa más de 1 KB.
    - C:\ExcesosVelocidad\logs\flota_hoy.json → OK si "generado" tiene menos de 2 horas y "errores" está vacío. Su nombre en la lista es "Export flota (cada hora)".
    Si un log no existe, el estado es "fail". Si existe pero el resultado no es el esperado, el estado es "warn".
+   Excepción: si la hora programada del bot todavía no pasó hoy (Controlar excesos 08:00, SICOP 09:00, Jornada bot Diario 14:00), o pasó hace menos de 30 minutos y el log existe pero no terminó, el estado es "ok" con detalle "todavía no corrió hoy" / "en ejecución", y no cuenta como problema.
 
 2. FLOTA. Con flota_hoy.json y C:\jornada-bot\estado-choferes.json armá una fila por cada unidad de "wialon":
    - cis = los 3 primeros caracteres del nombre.
@@ -31,10 +32,11 @@ Chequeo diario de los bots y de la flota de Transtotal. Respondé en español y 
    Ordená: primero las unidades que reportan, al final las de hs > 24.
 
 3. TABLERO. En https://claude.ai/artifact/CKkGt8UCiNGHGtLGCwfAMs, con ArtifactData:
+   - Leé primero meta/salud (es el resultado del chequeo anterior; lo necesitás para el paso 4).
    - set meta/salud: {chequeado: "DD/MM/AAAA HH:MM", items: [{nombre, estado: "ok"|"warn"|"fail", detalle (1 línea)}]}
    - set meta/flota: {generado: "DD/MM/AAAA HH:MM", unidades: [...]}
    - Por cada alerta nueva, creá una tarea en "tareas" con area "operacion", prioridad 1, estado "pendiente" y un "siguiente" concreto. Antes listá las tareas y no dupliques una que ya esté abierta.
    Leé cada documento antes de escribirlo para obtener if_version.
 
-4. AVISO. Si hay algún bot en warn o fail, o alguna alerta de flota, avisá con PushNotification en una línea por problema. Si todo está OK, no avises.
+4. AVISO. Si hay algún bot en warn o fail, o alguna alerta de flota, avisá con PushNotification en una línea por problema, pero solo si es nuevo: no repitas un problema que ya figuraba con el mismo estado en el meta/salud anterior ni una alerta de flota que ya tiene tarea abierta. Si todo está OK o nada cambió, no avises.
 ```
