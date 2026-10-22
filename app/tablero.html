@@ -1,0 +1,160 @@
+<title>Tablero Transtotal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: hoja de ruta — franja "Hoy" arriba, luego una columna por área de trabajo */
+:root{
+  --bg:#f3f4f2;--surface:#ffffff;--ink:#1d232a;--muted:#5d6670;--line:#d9ddd8;
+  --accent:#c98a00;--accent-soft:#fbefd2;--ok:#2f7d4f;--doing:#2b62a8;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--doing:#79a8e8;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--doing:#79a8e8;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:3px solid var(--ink);padding-bottom:10px}
+h1{font-family:var(--f-display);font-size:2.4rem;line-height:1;margin:0;letter-spacing:.01em;text-transform:uppercase}
+.fecha{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+h2{font-family:var(--f-display);font-size:1.3rem;text-transform:uppercase;letter-spacing:.06em;margin:0}
+.hoy{background:var(--accent-soft);border-left:6px solid var(--accent);padding:16px 18px;display:grid;gap:10px}
+.hoy ol{margin:0;padding-left:1.3em;display:grid;gap:8px}
+.hoy li b{font-weight:600}
+.hoy .nota{color:var(--muted);margin:0;text-wrap:pretty}
+.sub{font-size:.85rem;color:var(--muted)}
+.areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+.area{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;gap:10px;min-width:0}
+.area-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.area-h h3{font-family:var(--f-display);font-size:1.25rem;margin:0;text-wrap:balance}
+.estado{font-family:var(--f-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border:1px solid currentColor;white-space:nowrap}
+.e-activo{color:var(--doing)}.e-idea{color:var(--muted)}.e-rutina{color:var(--ok)}
+.resumen{margin:0;color:var(--muted);font-size:.9rem}
+ul.tareas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.t{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.t button.chk{width:22px;height:22px;border:2px solid var(--muted);background:transparent;cursor:pointer;font:700 12px var(--f-mono);color:var(--surface);padding:0;margin-top:1px}
+.t.en_curso button.chk{border-color:var(--doing);background:linear-gradient(90deg,var(--doing) 50%,transparent 50%)}
+.t.hecha button.chk{border-color:var(--ok);background:var(--ok)}
+.t.hecha .tt{text-decoration:line-through;color:var(--muted)}
+.tt{min-width:0}
+.sig{display:block;font-size:.82rem;color:var(--muted)}
+.p1 .tt::before{content:"▲ ";color:var(--accent);font-size:.75em}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+form.add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:12px}
+form.add input,form.add select{font:inherit;padding:6px 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+form.add input{flex:1 1 220px}
+form.add button{font:600 .9rem var(--f-body);padding:7px 14px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
+.vacio{color:var(--muted);font-style:italic}
+.salud{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.salud li{background:var(--surface);border:1px solid var(--line);padding:10px 12px;display:grid;gap:2px;min-width:0}
+.salud .sn{font-weight:600;display:flex;align-items:center;gap:8px}
+.salud .dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
+.salud .ok .dot{background:var(--ok)}.salud .warn .dot{background:var(--accent)}.salud .fail .dot{background:#c0392b}
+.salud .sd{font-size:.85rem;color:var(--muted)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
+table.flota{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
+.flota th,.flota td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.flota th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted)}
+.flota .cis{font-family:var(--f-mono)}
+.flota tr.mov td.v{color:var(--doing);font-weight:600}
+.flota tr.alerta td{background:var(--accent-soft)}
+.flota tr.off td{color:var(--muted)}
+.leyenda{font-size:.8rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Tablero Transtotal</h1>
+    <span class="fecha" id="fecha"></span>
+  </header>
+
+  <section class="hoy" aria-labelledby="hoy-h">
+    <h2 id="hoy-h">Hacé esto hoy</h2>
+    <ol id="foco"><li class="vacio">Cargando tareas…</li></ol>
+    <p class="nota" id="nota"></p>
+  </section>
+
+  <section style="display:grid;gap:12px" aria-labelledby="salud-h">
+    <h2 id="salud-h">Bots y automatizaciones</h2>
+    <p class="sub" id="salud-ts"></p>
+    <ul class="salud" id="salud"><li class="vacio">Sin chequeo todavía.</li></ul>
+  </section>
+
+  <section style="display:grid;gap:12px" aria-labelledby="flota-h">
+    <h2 id="flota-h">Flota ahora</h2>
+    <p class="sub" id="flota-ts"></p>
+    <div class="tw"><table class="flota"><thead><tr><th>Cisterna</th><th>Tractor</th><th>Chofer</th><th>Vel.</th><th>Último reporte</th></tr></thead><tbody id="flota"><tr><td colspan="5" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Áreas</h2>
+    <div class="leyenda"><span>Tocá el cuadrado para avanzar: pendiente → en curso → hecha</span><span>▲ prioridad alta</span></div>
+    <div class="areas" id="areas"><p class="vacio">Cargando áreas…</p></div>
+  </section>
+
+  <form class="add" id="add">
+    <input id="nt" placeholder="Nueva tarea" required>
+    <select id="na" aria-label="Área"></select>
+    <select id="np" aria-label="Prioridad"><option value="1">Alta</option><option value="2" selected>Media</option><option value="3">Baja</option></select>
+    <button type="submit">Agregar</button>
+  </form>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+$("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+let areas=[],tareas=[],meta={},salud={},flota={},db=null;
+const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const abiertas=tareas.filter(t=>t.estado!=="hecha");
+  let foco=(meta.foco||[]).map(id=>tareas.find(t=>t.id===id)).filter(t=>t&&t.estado!=="hecha");
+  if(!foco.length) foco=[...abiertas].sort((a,b)=>(a.prioridad||2)-(b.prioridad||2)||(a.orden||0)-(b.orden||0)).slice(0,3);
+  const an=id=>(areas.find(a=>a.id===id)||{}).nombre||"";
+  $("foco").innerHTML=foco.length?foco.map(t=>`<li><b>${esc(t.titulo)}</b> <span class="sub">· ${esc(an(t.area))}</span>${t.siguiente?`<span class="sig">Paso: ${esc(t.siguiente)}</span>`:""}</li>`).join(""):'<li class="vacio">No hay tareas abiertas.</li>';
+  $("nota").textContent=meta.nota||"";
+  $("areas").innerHTML=areas.length?[...areas].sort((a,b)=>(a.orden||0)-(b.orden||0)).map(a=>{
+    const ts=tareas.filter(t=>t.area===a.id).sort((x,y)=>(x.estado==="hecha")-(y.estado==="hecha")||(x.prioridad||2)-(y.prioridad||2));
+    return `<article class="area"><div class="area-h"><h3>${esc(a.nombre)}</h3><span class="estado e-${esc(a.estado)}">${esc(a.estado)}</span></div>
+    ${a.resumen?`<p class="resumen">${esc(a.resumen)}</p>`:""}
+    <ul class="tareas">${ts.map(t=>`<li class="t ${esc(t.estado)} p${t.prioridad||2}"><button class="chk" data-id="${esc(t.id)}" aria-label="Cambiar estado: ${esc(t.estado)}">${t.estado==="hecha"?"✓":""}</button><span class="tt">${esc(t.titulo)}${t.siguiente&&t.estado!=="hecha"?`<span class="sig">${esc(t.siguiente)}</span>`:""}</span></li>`).join("")||'<li class="vacio">Sin tareas.</li>'}</ul></article>`}).join(""):'<p class="vacio">Todavía no hay áreas cargadas.</p>';
+  const sl=(salud.items||[]);
+  $("salud-ts").textContent=salud.chequeado?"Último chequeo: "+salud.chequeado:"";
+  $("salud").innerHTML=sl.length?sl.map(s=>`<li class="${esc(s.estado)}"><span class="sn"><span class="dot"></span>${esc(s.nombre)}</span><span class="sd">${esc(s.detalle)}</span></li>`).join(""):'<li class="vacio">Sin chequeo todavía.</li>';
+  const fl=(flota.unidades||[]);
+  $("flota-ts").textContent=flota.generado?"Transdat + SMP · "+flota.generado:"";
+  const hs=h=>h==null?"—":h<0.5?"ahora":h<48?Math.round(h)+" h":Math.round(h/24)+" d";
+  if(fl.length) $("flota").innerHTML=fl.map(u=>{const cls=u.alerta?"alerta":(u.hs>24?"off":(u.vel>5?"mov":""));return `<tr class="${cls}"><td class="cis">${esc(u.cis)}</td><td>${esc(u.tractor||"—")}</td><td>${esc(u.chofer||"—")}${u.alerta?` <span class="sub">· ${esc(u.alerta)}</span>`:""}</td><td class="v">${u.vel} km/h</td><td>${hs(u.hs)}</td></tr>`}).join("");
+  $("na").innerHTML=areas.map(a=>`<option value="${esc(a.id)}">${esc(a.nombre)}</option>`).join("");
+}
+render();
+
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button.chk");if(!b||!db)return;
+  const t=tareas.find(x=>x.id===b.dataset.id);if(!t)return;
+  b.disabled=true;
+  try{await db.doc("tareas/"+t.id).update({estado:NEXT[t.estado]||"en_curso",actualizada:new Date().toISOString()})}catch(err){console.warn(err)}
+  b.disabled=false;
+});
+$("add").addEventListener("submit",async e=>{
+  e.preventDefault();if(!db)return;
+  const titulo=$("nt").value.trim();if(!titulo)return;
+  try{await db.collection("tareas").add({titulo,area:$("na").value,prioridad:+$("np").value,estado:"pendiente",orden:99,actualizada:new Date().toISOString()});$("nt").value=""}catch(err){console.warn(err)}
+});
+
+(async()=>{
+  db=await claude.use("db");
+  if(!db){$("foco").innerHTML='<li class="vacio">No se pudo conectar con los datos del tablero.</li>';$("areas").innerHTML="";return}
+  const err=e=>console.warn(e);
+  db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
+  db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
+  db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render()},err);
+  db.doc("meta/salud").onSnapshot(s=>{salud=s.exists?s.data():{};render()},err);
+  db.doc("meta/hoy").onSnapshot(s=>{meta=s.exists?s.data():{};render()},err);
+})();
+</script>

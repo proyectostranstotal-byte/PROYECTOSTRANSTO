@@ -1,0 +1,8 @@
+{
+ "area": "liquidaciones",
+ "estado": "pendiente",
+ "orden": 16,
+ "prioridad": 1,
+ "siguiente": "Elegir: corregir CALCULO con km reales o cambiar la fórmula del reparto.",
+ "titulo": "Resolver km cruzados 558/559 entre CALCULO y ANALITIK"
+}

@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "diaria",
+ "fuente": "IMSEG, Wialon (SmartMove Pro), Transdat",
+ "nombre": "Control de jornadas",
+ "orden": 1,
+ "resumen": "Diario. IMSEG + Wialon/Transdat (iButton). Límites: jornada 12 h, manejo neto 10 h, continuo 5 h con pausa 25–30 min, descanso 10 h. Exceso leve 12–13, moderado 13–14, grave +14."
+}

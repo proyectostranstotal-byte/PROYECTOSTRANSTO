@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "por viaje",
+ "fuente": "Tickets de balanza + CONTROL PESOS M3-KG.xlsx",
+ "nombre": "Control de pesadas",
+ "orden": 5,
+ "resumen": "Excel CONTROL PESOS M3-KG por Numero HR. Archivo: PESADA [patente acoplado] [fecha] (adosados: patente tractor)."
+}
