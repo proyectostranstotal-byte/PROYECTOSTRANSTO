@@ -1,0 +1,7 @@
+{
+ "auditorias": [],
+ "facturacion": {},
+ "hr_m3": {"cargadas": 0, "total": 0},
+ "hr_transoft": {"cargadas": 0, "total": 0},
+ "seguridad": {"respondido": false}
+}

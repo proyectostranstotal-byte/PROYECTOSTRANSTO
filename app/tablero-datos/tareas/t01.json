@@ -1,0 +1,8 @@
+{
+ "area": "hojas-ruta",
+ "estado": "pendiente",
+ "orden": 1,
+ "prioridad": 1,
+ "siguiente": "Dejar una carpeta de Drive donde caen las hojas y correr el script ahí.",
+ "titulo": "Pasar las hojas de ruta al script Python por lote"
+}

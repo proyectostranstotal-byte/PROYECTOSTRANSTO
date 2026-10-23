@@ -1,0 +1,8 @@
+{
+ "area": "facturacion",
+ "estado": "en_curso",
+ "orden": 6,
+ "prioridad": 2,
+ "siguiente": "Fase 1: snapshot de los DBF de FACCOB, cargar una factura de prueba y comparar.",
+ "titulo": "Mapear tablas DBF de facturas en Transoft"
+}

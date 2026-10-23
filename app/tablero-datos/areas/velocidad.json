@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "mensual",
+ "fuente": "IMSEG hoja Conducción, tacógrafos VDO",
+ "nombre": "Exceso de velocidad",
+ "orden": 6,
+ "resumen": "Km con velocidad >80 km/h. Usar la hoja Conducción de IMSEG (las infracciones no son confiables) y respaldar con tacógrafo."
+}

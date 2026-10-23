@@ -1,0 +1,8 @@
+{
+ "area": "flota",
+ "estado": "pendiente",
+ "orden": 20,
+ "prioridad": 3,
+ "siguiente": "555 hace 4 días y 602 hace 6. Confirmar si están paradas o si es una falla del equipo.",
+ "titulo": "Cisternas sin reportar a SMP"
+}

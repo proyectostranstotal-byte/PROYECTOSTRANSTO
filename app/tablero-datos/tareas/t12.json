@@ -1,0 +1,8 @@
+{
+ "area": "incentivos",
+ "estado": "pendiente",
+ "orden": 12,
+ "prioridad": 2,
+ "siguiente": "Pasarme las reglas actuales del programa: qué suma, qué resta y cada cuánto se paga.",
+ "titulo": "Cálculo automático del puntaje de incentivos"
+}

@@ -1,0 +1,8 @@
+{
+ "estado": "activo",
+ "frecuencia": "mensual",
+ "fuente": "Transoft escritorio (\\\\SERVER, K:)",
+ "nombre": "Facturación (Transoft)",
+ "orden": 8,
+ "resumen": "Facturas en papel cargadas a mano en Transoft escritorio (DBF en K:\\Transoft\\Datos). Plan: escaneo → OCR → escritura directa en DBF."
+}
