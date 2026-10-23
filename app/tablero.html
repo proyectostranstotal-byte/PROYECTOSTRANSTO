@@ -67,6 +67,13 @@ input,select{font:inherit;padding:5px 8px;border:1px solid var(--line);backgroun
 .ex .exh{font-size:.9rem}
 .ex .exh b{font-family:var(--f-mono);font-weight:500}
 .ex .com{font-size:.88rem;color:var(--muted)}
+.ex .res{font-family:var(--f-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-left:6px}
+.sug{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sug li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;flex-wrap:wrap}
+.sug b{font-family:var(--f-mono);font-weight:500}
+.sug .base{color:var(--ok);font-weight:600}
+.sug button{font-size:.78rem;padding:2px 8px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.sug li.hecha{opacity:.55}
 .cho{display:grid;gap:4px;min-width:0}
 .cho-h{display:flex;justify-content:space-between;gap:8px;font-weight:600}
 .falta{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;align-items:center}
@@ -202,7 +209,7 @@ const INICIO_INCENTIVOS="2026-11-01";
 const META_AUD=[4,5];
 
 $("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
-let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],mesDoc=null,db=null;
+let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],audSug={},mesDoc=null,db=null;
 let mesSel=mesDe(new Date()),unsubMes=null;
 const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
 
@@ -268,7 +275,8 @@ function renderOb(){
   out.push(["aud",sA,card("aud","Auditorías de unidades",sA,`
     <div class="ob-k">${aud.length}<small>de ${META_AUD[0]} a ${META_AUD[1]} en el mes</small></div>
     <div class="bar"><i style="width:${Math.min(100,aud.length/META_AUD[1]*100)}%"></i></div>
-    ${aud.length?`<ul class="tags">${aud.map((a,i)=>`<li>${esc(a.cis)} <span class="sub">${esc(fmtFecha(a.fecha))}</span><button type="button" data-aud-del="${i}" aria-label="Quitar ${esc(a.cis)}">×</button></li>`).join("")}</ul>`:'<p class="sub">Ninguna auditada este mes.</p>'}
+    ${(()=>{const sg=audSug.sugeridas||[];if(!sg.length)return '<p class="sub">Las unidades sugeridas aparecen cuando corre el chequeo de las 08:37.</p>';const yaA=new Set(aud.map(a=>a.cis+"|"+(a.tractor||"")));return `<p class="sub">Sugeridas (auditoría más vieja)${audSug.generado?" · "+esc(audSug.generado):""}</p><ul class="sug">${sg.map(u=>{const hecha=aud.some(a=>a.cis===u.cis||(u.tractor&&a.tractor===u.tractor));return `<li class="${hecha?"hecha":""}"><span><b>${esc(u.tractor||"")}</b>${u.cis?" · "+esc(u.cis):""} · ${u.ultima?esc(u.dias)+" días":"sin auditoría"}${u.en_base?' · <span class="base">En la base</span>':(u.dist_km!=null?` · <span class="sub">a ${Math.round(u.dist_km)} km</span>`:"")}</span>${hecha?'<span class="sub">Auditada ✓</span>':`<button type="button" data-aud-sug="${esc(u.tractor||u.cis)}">Auditada hoy</button>`}</li>`}).join("")}</ul>`})()}
+    ${aud.length?`<ul class="tags">${aud.map((a,i)=>`<li>${esc(a.cis||a.tractor)}${a.tractor&&a.cis?` <span class="sub">${esc(a.tractor)}</span>`:""} <span class="sub">${esc(fmtFecha(a.fecha))}</span><button type="button" data-aud-del="${i}" aria-label="Quitar ${esc(a.cis)}">×</button></li>`).join("")}</ul>`:'<p class="sub">Ninguna auditada este mes.</p>'}
     <div class="row"><select id="aud-cis" aria-label="Cisterna auditada">${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select><input type="date" id="aud-f" value="${hoyISO()}" aria-label="Fecha de auditoría"><button class="btn" type="button" id="aud-add">Registrar</button></div>`)]);
 
   // 2. Excesos
@@ -278,7 +286,7 @@ function renderOb(){
     <div class="ob-k">${pend.length}<small>sin comentario · ${excesos.filter(e=>e.fecha===h).length} hoy</small></div>
     ${visibles.length?`<ul class="lista">${visibles.map(e=>{const ok=!!(e.comentario||"").trim();return `<li class="ex ${ok?"hecho":""}">
       <span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}${e.detalle?` <span class="sub">(${esc(e.detalle)})</span>`:""}</span>
-      ${ok?`<span class="com">“${esc(e.comentario)}”</span>`:`<div class="row"><input id="com-${esc(e.id)}" placeholder="Qué dijo el chofer / motivo" aria-label="Comentario"><button class="btn" type="button" data-com="${esc(e.id)}">Guardar</button></div>`}
+      ${ok?`<span class="com">“${esc(e.comentario)}”${e.resultado==="falta"?'<span class="res s-bad">Falta</span>':e.resultado==="justificado"?'<span class="res s-ok">Justificado</span>':""}</span>`:`<div class="row"><input id="com-${esc(e.id)}" placeholder="Qué dijo el chofer / motivo" aria-label="Comentario"></div><div class="row"><button class="btn sec" type="button" data-com="${esc(e.id)}" data-res="justificado">Justificado</button><button class="btn" type="button" data-com="${esc(e.id)}" data-res="falta">Cuenta como falta</button></div>`}
     </li>`}).join("")}</ul>`:'<p class="sub">No hay excesos pendientes.</p>'}
     <details class="mas"><summary>Cargar un exceso a mano</summary><div class="formx">
       <div class="row"><input type="date" id="ex-f" value="${h}" aria-label="Fecha"><input id="ex-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"><select id="ex-cis" aria-label="Cisterna"><option value="">Cisterna</option>${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div>
@@ -345,7 +353,14 @@ $("obs").addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b||!db)return;
   if(b.id==="aud-add"){const cis=$("aud-cis").value,f=$("aud-f").value||hoyISO();if(!cis)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis,fecha:f}]});return}
   if(b.dataset.audDel!=null){const a=[...(M().auditorias||[])];a.splice(+b.dataset.audDel,1);await guardarMes({auditorias:a});return}
-  if(b.dataset.com){const id=b.dataset.com,v=$("com-"+id).value.trim();if(!v)return;b.disabled=true;try{await db.doc("excesos/"+id).update({comentario:v,comentado:new Date().toISOString()})}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.com){const id=b.dataset.com,inp=$("com-"+id),v=inp.value.trim();if(!v){inp.focus();inp.placeholder="Escribí el comentario primero";return}
+    const ex=excesos.find(x=>x.id===id);if(!ex)return;const res=b.dataset.res;b.disabled=true;
+    try{
+      const patch={comentario:v,resultado:res,comentado:new Date().toISOString()};
+      if(res==="falta"){const r=await db.collection("faltas").add({fecha:ex.fecha||hoyISO(),chofer:ex.chofer||"Sin chofer",falta:[ex.tipo,ex.detalle].filter(Boolean).join(": "),avisado:false,exceso_id:id});patch.falta_id=r.id}
+      await db.doc("excesos/"+id).update(patch);
+    }catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.audSug){const k=b.dataset.audSug,u=(audSug.sugeridas||[]).find(x=>(x.tractor||x.cis)===k);if(!u)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis:u.cis||"",tractor:u.tractor||"",fecha:hoyISO()}]});return}
   if(b.id==="ex-add"){const d={fecha:$("ex-f").value||hoyISO(),chofer:$("ex-ch").value.trim(),cis:$("ex-cis").value,tipo:$("ex-t").value,detalle:$("ex-d").value.trim(),comentario:"",origen:"manual"};if(!d.chofer&&!d.cis)return;b.disabled=true;try{await db.collection("excesos").add(d)}catch(err){console.warn(err);b.disabled=false}return}
   if(b.dataset.av){const f=faltas.find(x=>x.id===b.dataset.av);if(!f)return;b.disabled=true;try{await db.doc("faltas/"+f.id).update({avisado:!f.avisado,avisado_fecha:f.avisado?"":hoyISO()})}catch(err){console.warn(err);b.disabled=false}return}
   if(b.id==="fa-add"){const d={fecha:$("fa-f").value||hoyISO(),chofer:$("fa-ch").value.trim(),falta:$("fa-d").value.trim(),avisado:false};if(!d.chofer||!d.falta)return;b.disabled=true;try{await db.collection("faltas").add(d)}catch(err){console.warn(err);b.disabled=false}return}
@@ -360,7 +375,7 @@ $("obs").addEventListener("change",async e=>{
 });
 $("obs").addEventListener("keydown",e=>{
   if(e.key!=="Enter")return;const i=e.target.closest("input[id^='com-']");if(!i)return;
-  e.preventDefault();i.parentElement.querySelector("button")?.click();
+  e.preventDefault();
 });
 
 /* ---------- Resto del tablero ---------- */
@@ -427,6 +442,7 @@ setInterval(()=>{render()},5*60*1000);
   db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
   db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
   db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
+  db.doc("meta/auditorias").onSnapshot(s=>{audSug=s.exists?s.data():{};renderOb()},err);
   db.doc("meta/salud").onSnapshot(s=>{salud=s.exists?s.data():{};render()},err);
   db.doc("meta/hoy").onSnapshot(s=>{meta=s.exists?s.data():{};render()},err);
   subMes();

@@ -9,15 +9,17 @@ Artefacto: https://claude.ai/artifact/CKkGt8UCiNGHGtLGCwfAMs (publicado el 22/10
 
 Colecciones nuevas en la base del artefacto:
 
+- `meta/auditorias`: lo escribe el chequeo de las 08:37 con las 5 unidades a auditar y si están en la base.
+
 - `mes/<AAAA-MM>`: `auditorias` [{cis, fecha}], `hr_m3` y `hr_transoft` {cargadas, total}, `seguridad` {respondido, fecha}, `facturacion` {coincide, excel, enviado, <paso>_fecha}. La página crea el documento del mes la primera vez que se registra algo.
-- `excesos/<id>`: {fecha AAAA-MM-DD, chofer, cis, tipo, detalle, comentario, origen}. Un exceso sin comentario queda pendiente; si es de un día anterior, la tarjeta pasa a "Atrasado".
+- `excesos/<id>`: {fecha AAAA-MM-DD, chofer, cis, tipo, detalle, comentario, origen}. Un exceso sin comentario queda pendiente; si es de un día anterior, la tarjeta pasa a "Atrasado". Al comentarlo, Nico elige "Justificado" o "Cuenta como falta"; lo segundo crea el documento en `faltas` (campo `falta_id` en el exceso). A los choferes no se les avisa por ahora.
 - `faltas/<id>`: {fecha, chofer, falta, avisado, avisado_fecha}. Programa de incentivos desde el 1/11/2026.
 
 Metas: 4 a 5 auditorías por mes. El reporte de seguridad vial no tiene vencimiento. La facturación la hace el sector de facturación; acá solo se controla lo que pasa Air Liquide, se actualiza el Excel con la macro y se envía.
 
 ## Tarea programada "Chequeo bots Transtotal"
 
-Se crea desde la app de escritorio en la PC `NDIFABIO` (necesita `device_bash` y las carpetas `C:\jornada-bot`, `C:\SICOP\sicop\whatsapp\logs` y `C:\ExcesosVelocidad\logs` conectadas). Lunes a sábado, cada hora de 08:37 a 15:37 (America/Argentina/Buenos_Aires, cron `37 8-15 * * 1-6`), modo automático, aviso por push. Prompt:
+Se crea desde la app de escritorio en la PC `NDIFABIO` (necesita `device_bash` y las carpetas `C:\jornada-bot`, `C:\SICOP\sicop\whatsapp\logs`, `C:\ExcesosVelocidad\logs` y, para las auditorías, `P:\Archivos compartidos Transtotal\NICO\ALASA\AUDITORIAS` conectadas). Lunes a sábado, cada hora de 08:37 a 15:37 (America/Argentina/Buenos_Aires, cron `37 8-15 * * 1-6`), modo automático, aviso por push. Prompt:
 
 ```
 Chequeo de los bots y de la flota de Transtotal (corre cada hora, de 08:37 a 15:37). Respondé en español y en forma breve.
@@ -41,12 +43,18 @@ Chequeo de los bots y de la flota de Transtotal (corre cada hora, de 08:37 a 15:
    - alerta = "en movimiento sin iButton" si vel > 5 y no hay chofer.
    Ordená: primero las unidades que reportan, al final las de hs > 24.
 
+2b. EXCESOS (en cada corrida; solo agrega lo que falte). Del log controlar-excesos_<HOY>.log y del reporte C:\jornada-bot\reportes\Control de jornada <AAAA-MM>.xlsx tomá cada exceso de jornada y de manejo del día anterior (fecha, chofer, cisterna, tipo "Jornada" o "Manejo continuo", detalle con las horas). Los lunes sumá los excesos de velocidad >80 km/h del último informe semanal de C:\ExcesosVelocidad (tipo "Velocidad", detalle con km/h y lugar). No se avisa nada a los choferes.
+
+2c. AUDITORÍAS (solo en la corrida de las 08:37). Leé P:\Archivos compartidos Transtotal\NICO\ALASA\AUDITORIAS\unidades_cp.csv (vigencia y última auditoría por tractor; la auditoría RS-SGI-08 vence a los 2 meses). Dejá afuera las unidades excluidas en auditorias.py. Ordená por días desde la última auditoría (sin auditoría primero) y quedate con las 5 más viejas. Para cada una buscá su posición actual en Transdat como lo hace auditorias.py (credenciales en C:\ExcesosVelocidad\transdat.json) y la distancia a la base de Transtotal (Ibarlucea, Ruta 34, mismas coordenadas y radio que usa auditorias.py). en_base = está dentro de ese radio.
+
 3. TABLERO. En https://claude.ai/artifact/CKkGt8UCiNGHGtLGCwfAMs, con ArtifactData:
    - Leé primero meta/salud (es el resultado del chequeo anterior; lo necesitás para el paso 4).
    - set meta/salud: {chequeado: "DD/MM/AAAA HH:MM", items: [{nombre, estado: "ok"|"warn"|"fail", detalle (1 línea)}]}
    - set meta/flota: {generado: "DD/MM/AAAA HH:MM", unidades: [...]}
    - Por cada alerta nueva, creá una tarea en "tareas" con area "operacion", prioridad 1, estado "pendiente" y un "siguiente" concreto. Antes listá las tareas y no dupliques una que ya esté abierta.
+   - Excesos: por cada exceso de 2b, set excesos/<id> con id "x<AAAAMMDD>-<cisterna o chofer sin espacios>-<j|m|v>" y {fecha "AAAA-MM-DD", chofer, cis, tipo, detalle, comentario: "", origen: "chequeo"}. Si el documento ya existe no lo toques (puede tener el comentario de Nico).
+   - Auditorías (solo 08:37): set meta/auditorias: {generado: "DD/MM/AAAA HH:MM", sugeridas: [{tractor (patente), cis, ultima "AAAA-MM-DD" o "", dias, vence "AAAA-MM-DD", en_base true/false, dist_km}]}.
    Leé cada documento antes de escribirlo para obtener if_version.
 
-4. AVISO. Si hay algún bot en warn o fail, o alguna alerta de flota, avisá con PushNotification en una línea por problema, pero solo si es nuevo: no repitas un problema que ya figuraba con el mismo estado en el meta/salud anterior ni una alerta de flota que ya tiene tarea abierta. Si todo está OK o nada cambió, no avises.
+4. AVISO. Si hay algún bot en warn o fail, o alguna alerta de flota, avisá con PushNotification en una línea por problema, pero solo si es nuevo: no repitas un problema que ya figuraba con el mismo estado en el meta/salud anterior ni una alerta de flota que ya tiene tarea abierta. Auditorías (solo 08:37): si alguna sugerida tiene en_base true, avisá "Auditoría: <patente> (<cis>) está en la base, hace <dias> días de la última". Si todo está OK o nada cambió, no avises.
 ```
