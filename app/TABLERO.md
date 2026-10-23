@@ -5,6 +5,16 @@ Artefacto: https://claude.ai/artifact/CKkGt8UCiNGHGtLGCwfAMs (publicado el 22/10
 - `tablero.html`: la página. Se republica con el Artifact tool pasando esa URL.
 - `tablero-datos/`: respaldo de la base del artefacto (`areas/`, `tareas/`, `meta/`), un JSON por documento, tal como se cargó el 22/10/2026. Para recargarla en otro artefacto: `ArtifactData` batch de `set` con el id igual al nombre del archivo.
 
+## Panel "Mis obligaciones" (23/10/2026)
+
+Colecciones nuevas en la base del artefacto:
+
+- `mes/<AAAA-MM>`: `auditorias` [{cis, fecha}], `hr_m3` y `hr_transoft` {cargadas, total}, `seguridad` {respondido, fecha}, `facturacion` {coincide, excel, enviado, <paso>_fecha}. La página crea el documento del mes la primera vez que se registra algo.
+- `excesos/<id>`: {fecha AAAA-MM-DD, chofer, cis, tipo, detalle, comentario, origen}. Un exceso sin comentario queda pendiente; si es de un día anterior, la tarjeta pasa a "Atrasado".
+- `faltas/<id>`: {fecha, chofer, falta, avisado, avisado_fecha}. Programa de incentivos desde el 1/11/2026.
+
+Metas: 4 a 5 auditorías por mes. El reporte de seguridad vial no tiene vencimiento. La facturación la hace el sector de facturación; acá solo se controla lo que pasa Air Liquide, se actualiza el Excel con la macro y se envía.
+
 ## Tarea programada "Chequeo bots Transtotal"
 
 Se crea desde la app de escritorio en la PC `NDIFABIO` (necesita `device_bash` y las carpetas `C:\jornada-bot`, `C:\SICOP\sicop\whatsapp\logs` y `C:\ExcesosVelocidad\logs` conectadas). Lunes a sábado, cada hora de 08:37 a 15:37 (America/Argentina/Buenos_Aires, cron `37 8-15 * * 1-6`), modo automático, aviso por push. Prompt:

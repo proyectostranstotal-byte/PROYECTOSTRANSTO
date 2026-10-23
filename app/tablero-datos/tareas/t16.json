@@ -1,8 +1,9 @@
 {
  "area": "liquidaciones",
- "estado": "pendiente",
+ "estado": "hecha",
  "orden": 16,
  "prioridad": 1,
- "siguiente": "Elegir: corregir CALCULO con km reales o cambiar la fórmula del reparto.",
- "titulo": "Resolver km cruzados 558/559 entre CALCULO y ANALITIK"
+ "siguiente": "Cerrada el 23/10/2026: la 559 ya no opera; no se corrige nada.",
+ "titulo": "Resolver km cruzados 558/559 entre CALCULO y ANALITIK",
+ "actualizada": "2026-10-23T12:10:00Z"
 }

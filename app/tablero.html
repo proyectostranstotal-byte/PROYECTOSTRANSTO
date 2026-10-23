@@ -2,31 +2,120 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
-/* Layout: hoja de ruta — franja "Hoy" arriba, luego una columna por área de trabajo */
+/* Layout: hoja de ruta — obligaciones del mes arriba, luego "Hoy", bots, flota y áreas plegadas */
 :root{
   --bg:#f3f4f2;--surface:#ffffff;--ink:#1d232a;--muted:#5d6670;--line:#d9ddd8;
-  --accent:#c98a00;--accent-soft:#fbefd2;--ok:#2f7d4f;--doing:#2b62a8;
+  --accent:#c98a00;--accent-soft:#fbefd2;--ok:#2f7d4f;--ok-soft:#e1f0e6;--doing:#2b62a8;
+  --bad:#b8382b;--bad-soft:#f8e1de;
   --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
   --f-body:"Source Sans 3",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
-  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--doing:#79a8e8;color-scheme:dark}}
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--ok-soft:#183324;--doing:#79a8e8;
+  --bad:#ef7a6c;--bad-soft:#3d1d1a;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
-  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--doing:#79a8e8;color-scheme:dark}
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--ok-soft:#183324;--doing:#79a8e8;
+  --bad:#ef7a6c;--bad-soft:#3d1d1a;color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:1100px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:3px solid var(--ink);padding-bottom:10px}
 h1{font-family:var(--f-display);font-size:2.4rem;line-height:1;margin:0;letter-spacing:.01em;text-transform:uppercase}
 .fecha{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
 h2{font-family:var(--f-display);font-size:1.3rem;text-transform:uppercase;letter-spacing:.06em;margin:0}
+section{display:grid;gap:12px;min-width:0}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.sub{font-size:.85rem;color:var(--muted)}
+.vacio{color:var(--muted);font-style:italic}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select{font:inherit;padding:5px 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.btn{font:600 .85rem var(--f-body);padding:6px 12px;border:0;background:var(--ink);color:var(--bg)}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Obligaciones */
+.mesnav{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.85rem}
+.mesnav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);width:28px;height:28px;padding:0}
+.mesnav span{min-width:9em;text-align:center;text-transform:capitalize}
+.resumen-ob{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border:1px solid currentColor;white-space:nowrap}
+.s-ok{color:var(--ok)}.s-pend{color:var(--accent)}.s-bad{color:var(--bad)}.s-info{color:var(--doing)}
+.obs{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;align-items:start}
+.ob{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--line);padding:12px 14px 14px;display:grid;gap:10px;min-width:0}
+.ob.st-ok{border-top-color:var(--ok)}.ob.st-pend{border-top-color:var(--accent)}.ob.st-bad{border-top-color:var(--bad)}.ob.st-info{border-top-color:var(--doing)}
+.ob-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ob-h h3{font-family:var(--f-display);font-size:1.25rem;margin:0;text-wrap:balance}
+.ob-k{font-family:var(--f-display);font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.ob-k small{font-family:var(--f-body);font-size:.85rem;color:var(--muted);margin-left:6px}
+.ob p{margin:0}
+.bar{height:6px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row input{flex:1 1 90px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.tags li{font-family:var(--f-mono);font-size:.8rem;border:1px solid var(--line);padding:2px 4px 2px 8px;display:flex;align-items:center;gap:4px}
+.tags button{border:0;background:transparent;color:var(--muted);padding:0 4px}
+.pasos{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pasos label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.pasos input{margin-top:3px;accent-color:var(--ok)}
+.lista{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:340px;overflow-y:auto}
+.ex{border-left:3px solid var(--accent);padding:4px 0 4px 10px;display:grid;gap:4px;min-width:0}
+.ex.hecho{border-left-color:var(--ok)}
+.ex .exh{font-size:.9rem}
+.ex .exh b{font-family:var(--f-mono);font-weight:500}
+.ex .com{font-size:.88rem;color:var(--muted)}
+.cho{display:grid;gap:4px;min-width:0}
+.cho-h{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.falta{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;align-items:center}
+.falta.ok span{color:var(--muted);text-decoration:line-through}
+.falta button{flex:none;font-size:.78rem;padding:2px 8px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.falta.ok button{color:var(--ok);border-color:var(--ok)}
+details.mas summary{cursor:pointer;font-size:.85rem;color:var(--muted)}
+details.mas[open] summary{margin-bottom:8px}
+.formx{display:grid;gap:6px}
+.formx .row input,.formx .row select{flex:1 1 120px}
+
+/* Hoy */
 .hoy{background:var(--accent-soft);border-left:6px solid var(--accent);padding:16px 18px;display:grid;gap:10px}
 .hoy ol{margin:0;padding-left:1.3em;display:grid;gap:8px}
 .hoy li b{font-weight:600}
 .hoy .nota{color:var(--muted);margin:0;text-wrap:pretty}
-.sub{font-size:.85rem;color:var(--muted)}
+.sig{display:block;font-size:.82rem;color:var(--muted)}
+
+/* Aviso de datos viejos */
+.viejo{background:var(--bad-soft);color:var(--ink);border-left:4px solid var(--bad);padding:6px 10px;font-size:.88rem;margin:0}
+
+/* Salud */
+.salud{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.salud li{background:var(--surface);border:1px solid var(--line);padding:10px 12px;display:grid;gap:2px;min-width:0}
+.salud .sn{font-weight:600;display:flex;align-items:center;gap:8px}
+.salud .dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
+.salud .ok .dot{background:var(--ok)}.salud .warn .dot{background:var(--accent)}.salud .fail .dot{background:var(--bad)}
+.salud .sd{font-size:.85rem;color:var(--muted)}
+
+/* Flota */
+.kpis{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.9rem}
+.kpis b{font-family:var(--f-display);font-size:1.4rem;font-variant-numeric:tabular-nums;margin-right:4px}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
+table.flota{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
+.flota th,.flota td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.flota th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted)}
+.flota .cis{font-family:var(--f-mono)}
+.flota tr.mov td.v{color:var(--doing);font-weight:600}
+.flota tr.alerta td{background:var(--accent-soft)}
+.flota tr.off td{color:var(--muted)}
+.flota tr.sep td{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted);background:var(--bg)}
+.flota .sinch{color:var(--bad);font-size:.82rem}
+
+/* Áreas */
+details.areas-box>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px}
+details.areas-box>summary::-webkit-details-marker{display:none}
+details.areas-box>summary::before{content:"▸";color:var(--muted)}
+details.areas-box[open]>summary::before{content:"▾"}
+details.areas-box[open]>summary{margin-bottom:12px}
 .areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
 .area{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;gap:10px;min-width:0}
 .area-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -36,33 +125,17 @@ h2{font-family:var(--f-display);font-size:1.3rem;text-transform:uppercase;letter
 .resumen{margin:0;color:var(--muted);font-size:.9rem}
 ul.tareas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .t{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
-.t button.chk{width:22px;height:22px;border:2px solid var(--muted);background:transparent;cursor:pointer;font:700 12px var(--f-mono);color:var(--surface);padding:0;margin-top:1px}
+.t button.chk{width:22px;height:22px;border:2px solid var(--muted);background:transparent;font:700 12px var(--f-mono);color:var(--surface);padding:0;margin-top:1px}
 .t.en_curso button.chk{border-color:var(--doing);background:linear-gradient(90deg,var(--doing) 50%,transparent 50%)}
 .t.hecha button.chk{border-color:var(--ok);background:var(--ok)}
 .t.hecha .tt{text-decoration:line-through;color:var(--muted)}
 .tt{min-width:0}
-.sig{display:block;font-size:.82rem;color:var(--muted)}
+.fe{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);margin-left:6px}
 .p1 .tt::before{content:"▲ ";color:var(--accent);font-size:.75em}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hechas summary{cursor:pointer;font-size:.82rem;color:var(--muted)}
+.hechas ul{margin-top:6px}
 form.add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:12px}
-form.add input,form.add select{font:inherit;padding:6px 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
 form.add input{flex:1 1 220px}
-form.add button{font:600 .9rem var(--f-body);padding:7px 14px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
-.vacio{color:var(--muted);font-style:italic}
-.salud{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
-.salud li{background:var(--surface);border:1px solid var(--line);padding:10px 12px;display:grid;gap:2px;min-width:0}
-.salud .sn{font-weight:600;display:flex;align-items:center;gap:8px}
-.salud .dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
-.salud .ok .dot{background:var(--ok)}.salud .warn .dot{background:var(--accent)}.salud .fail .dot{background:#c0392b}
-.salud .sd{font-size:.85rem;color:var(--muted)}
-.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
-table.flota{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
-.flota th,.flota td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-.flota th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted)}
-.flota .cis{font-family:var(--f-mono)}
-.flota tr.mov td.v{color:var(--doing);font-weight:600}
-.flota tr.alerta td{background:var(--accent-soft)}
-.flota tr.off td{color:var(--muted)}
 .leyenda{font-size:.8rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
 </style>
 
@@ -72,45 +145,225 @@ table.flota{border-collapse:collapse;width:100%;font-variant-numeric:tabular-num
     <span class="fecha" id="fecha"></span>
   </header>
 
+  <section aria-labelledby="ob-h">
+    <div class="sec-h">
+      <h2 id="ob-h">Mis obligaciones</h2>
+      <div class="mesnav"><button type="button" id="mprev" aria-label="Mes anterior">‹</button><span id="mlabel"></span><button type="button" id="mnext" aria-label="Mes siguiente">›</button></div>
+    </div>
+    <div class="resumen-ob" id="ob-res"></div>
+    <div class="obs" id="obs"><p class="vacio">Cargando obligaciones…</p></div>
+  </section>
+
   <section class="hoy" aria-labelledby="hoy-h">
     <h2 id="hoy-h">Hacé esto hoy</h2>
     <ol id="foco"><li class="vacio">Cargando tareas…</li></ol>
     <p class="nota" id="nota"></p>
   </section>
 
-  <section style="display:grid;gap:12px" aria-labelledby="salud-h">
-    <h2 id="salud-h">Bots y automatizaciones</h2>
+  <section aria-labelledby="salud-h">
+    <div class="sec-h"><h2 id="salud-h">Bots y automatizaciones</h2><span class="sub">Chequeo cada hora, 08:37 a 15:37, lunes a sábado</span></div>
     <p class="sub" id="salud-ts"></p>
     <ul class="salud" id="salud"><li class="vacio">Sin chequeo todavía.</li></ul>
   </section>
 
-  <section style="display:grid;gap:12px" aria-labelledby="flota-h">
+  <section aria-labelledby="flota-h">
     <h2 id="flota-h">Flota ahora</h2>
     <p class="sub" id="flota-ts"></p>
+    <div class="kpis" id="kpis"></div>
     <div class="tw"><table class="flota"><thead><tr><th>Cisterna</th><th>Tractor</th><th>Chofer</th><th>Vel.</th><th>Último reporte</th></tr></thead><tbody id="flota"><tr><td colspan="5" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
   </section>
 
-  <section style="display:grid;gap:12px">
-    <h2>Áreas</h2>
-    <div class="leyenda"><span>Tocá el cuadrado para avanzar: pendiente → en curso → hecha</span><span>▲ prioridad alta</span></div>
-    <div class="areas" id="areas"><p class="vacio">Cargando áreas…</p></div>
+  <section>
+    <details class="areas-box" id="areas-box">
+      <summary><h2>Áreas e ideas</h2><span class="sub" id="areas-n"></span></summary>
+      <div style="display:grid;gap:12px">
+        <div class="leyenda"><span>Tocá el cuadrado para avanzar: pendiente → en curso → hecha</span><span>▲ prioridad alta</span></div>
+        <div class="areas" id="areas"><p class="vacio">Cargando áreas…</p></div>
+        <form class="add" id="add">
+          <input id="nt" placeholder="Nueva tarea" required>
+          <select id="na" aria-label="Área"></select>
+          <select id="np" aria-label="Prioridad"><option value="1">Alta</option><option value="2" selected>Media</option><option value="3">Baja</option></select>
+          <button class="btn" type="submit">Agregar</button>
+        </form>
+      </div>
+    </details>
   </section>
-
-  <form class="add" id="add">
-    <input id="nt" placeholder="Nueva tarea" required>
-    <select id="na" aria-label="Área"></select>
-    <select id="np" aria-label="Prioridad"><option value="1">Alta</option><option value="2" selected>Media</option><option value="3">Baja</option></select>
-    <button type="submit">Agregar</button>
-  </form>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-$("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
-let areas=[],tareas=[],meta={},salud={},flota={},db=null;
-const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const hoyISO=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const mesDe=d=>d.getFullYear()+"-"+pad(d.getMonth()+1);
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const fmtFecha=iso=>{if(!iso)return"";const [y,m,d]=iso.slice(0,10).split("-");return d+"/"+m};
+const INICIO_INCENTIVOS="2026-11-01";
+const META_AUD=[4,5];
 
+$("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],mesDoc=null,db=null;
+let mesSel=mesDe(new Date()),unsubMes=null;
+const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
+
+/* "DD/MM/AAAA HH:MM" -> Date */
+function parseAR(s){const m=/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/.exec(s||"");return m?new Date(+m[3],m[2]-1,+m[1],+m[4],+m[5]):null}
+/* ¿Debería haber un chequeo más nuevo? Horario 08:37–15:37 lun–sáb */
+function horasViejo(d){
+  if(!d)return null;
+  const h=(Date.now()-d)/36e5;
+  const now=new Date(),dia=now.getDay(),min=now.getHours()*60+now.getMinutes();
+  const enHorario=dia>=1&&dia<=6&&min>=8*60+37&&min<=16*60;
+  if(enHorario)return h>1.5?h:null;
+  return h>20?h:null;
+}
+const hs=h=>h==null?"—":h<0.5?"ahora":h<48?Math.round(h)+" h":Math.round(h/24)+" d";
+
+/* ---------- Obligaciones ---------- */
+function mesLabel(k){const [y,m]=k.split("-");return MESES[m-1]+" "+y}
+function diaDelMes(k){const n=new Date();return mesDe(n)===k?n.getDate():(k<mesDe(n)?31:0)}
+const M=()=>mesDoc||{};
+const st=(c,t)=>({c,t});
+
+function estadoAud(){
+  const a=M().auditorias||[],n=a.length,d=diaDelMes(mesSel);
+  if(n>=META_AUD[0])return st("ok","Meta cumplida");
+  if(d>=22)return st("bad","Atrasada");
+  return st("pend","En curso");
+}
+function excesosPend(){return excesos.filter(e=>!(e.comentario||"").trim())}
+function estadoExc(){
+  const p=excesosPend(),h=hoyISO();
+  if(!p.length)return st("ok","Al día");
+  if(p.some(e=>(e.fecha||"")<h))return st("bad","Atrasado");
+  return st("pend","Falta comentar");
+}
+function estadoInc(){
+  const sinAv=faltas.filter(f=>!f.avisado).length;
+  if(hoyISO()<INICIO_INCENTIVOS&&!faltas.length)return st("info","Arranca el 1/11");
+  if(sinAv)return st("pend",sinAv+" sin avisar");
+  return st("ok","Todos avisados");
+}
+function estadoHR(k){
+  const o=M()[k]||{},c=+o.cargadas||0,t=+o.total||0;
+  if(!t)return st("pend","Sin datos");
+  if(c>=t)return st("ok","Al día");
+  return st(diaDelMes(mesSel)>=28?"bad":"pend","Faltan "+(t-c));
+}
+function estadoSV(){return M().seguridad?.respondido?st("ok","Respondido"):st("pend","Sin responder")}
+const PASOS_FAC=[["coincide","Lo que pasó Air Liquide coincide con lo nuestro"],["excel","Excel actualizado con la macro"],["enviado","Enviado al sector de facturación"]];
+function estadoFac(){const f=M().facturacion||{},n=PASOS_FAC.filter(p=>f[p[0]]).length;return n===3?st("ok","Listo"):st("pend",n+" de 3 pasos")}
+
+function card(id,titulo,s,body){return `<article class="ob st-${s.c}" id="ob-${id}"><div class="ob-h"><h3>${titulo}</h3><span class="chip s-${s.c}">${esc(s.t)}</span></div>${body}</article>`}
+
+function renderOb(){
+  $("mlabel").textContent=mesLabel(mesSel);
+  $("mnext").disabled=mesSel>=mesDe(new Date());
+  const cis=(flota.unidades||[]).map(u=>u.cis).sort();
+  const choferes=[...new Set((flota.unidades||[]).map(u=>u.chofer).filter(Boolean).concat(faltas.map(f=>f.chofer)))].sort();
+  const out=[];
+
+  // 1. Auditorías
+  const aud=M().auditorias||[],sA=estadoAud();
+  out.push(["aud",sA,card("aud","Auditorías de unidades",sA,`
+    <div class="ob-k">${aud.length}<small>de ${META_AUD[0]} a ${META_AUD[1]} en el mes</small></div>
+    <div class="bar"><i style="width:${Math.min(100,aud.length/META_AUD[1]*100)}%"></i></div>
+    ${aud.length?`<ul class="tags">${aud.map((a,i)=>`<li>${esc(a.cis)} <span class="sub">${esc(fmtFecha(a.fecha))}</span><button type="button" data-aud-del="${i}" aria-label="Quitar ${esc(a.cis)}">×</button></li>`).join("")}</ul>`:'<p class="sub">Ninguna auditada este mes.</p>'}
+    <div class="row"><select id="aud-cis" aria-label="Cisterna auditada">${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select><input type="date" id="aud-f" value="${hoyISO()}" aria-label="Fecha de auditoría"><button class="btn" type="button" id="aud-add">Registrar</button></div>`)]);
+
+  // 2. Excesos
+  const pend=excesosPend(),sE=estadoExc(),h=hoyISO();
+  const visibles=excesos.filter(e=>!(e.comentario||"").trim()||e.fecha===h).sort((a,b)=>(!!(a.comentario||"").trim())-(!!(b.comentario||"").trim())||(a.fecha||"").localeCompare(b.fecha||""));
+  out.push(["exc",sE,card("exc","Excesos: comentario de cada uno",sE,`
+    <div class="ob-k">${pend.length}<small>sin comentario · ${excesos.filter(e=>e.fecha===h).length} hoy</small></div>
+    ${visibles.length?`<ul class="lista">${visibles.map(e=>{const ok=!!(e.comentario||"").trim();return `<li class="ex ${ok?"hecho":""}">
+      <span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}${e.detalle?` <span class="sub">(${esc(e.detalle)})</span>`:""}</span>
+      ${ok?`<span class="com">“${esc(e.comentario)}”</span>`:`<div class="row"><input id="com-${esc(e.id)}" placeholder="Qué dijo el chofer / motivo" aria-label="Comentario"><button class="btn" type="button" data-com="${esc(e.id)}">Guardar</button></div>`}
+    </li>`}).join("")}</ul>`:'<p class="sub">No hay excesos pendientes.</p>'}
+    <details class="mas"><summary>Cargar un exceso a mano</summary><div class="formx">
+      <div class="row"><input type="date" id="ex-f" value="${h}" aria-label="Fecha"><input id="ex-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"><select id="ex-cis" aria-label="Cisterna"><option value="">Cisterna</option>${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div>
+      <div class="row"><select id="ex-t" aria-label="Tipo"><option>Jornada</option><option>Manejo continuo</option><option>Velocidad</option><option>Otro</option></select><input id="ex-d" placeholder="Detalle (ej. 5:21 h continuas)" aria-label="Detalle"><button class="btn" type="button" id="ex-add">Agregar</button></div>
+    </div></details>`)]);
+
+  // 3. Incentivos
+  const sI=estadoInc(),porCh={};
+  faltas.forEach(f=>{(porCh[f.chofer||"Sin chofer"]??=[]).push(f)});
+  const chs=Object.keys(porCh).sort((a,b)=>porCh[b].filter(f=>!f.avisado).length-porCh[a].filter(f=>!f.avisado).length||a.localeCompare(b));
+  out.push(["inc",sI,card("inc","Incentivos: faltas avisadas",sI,`
+    <p class="sub">${hoyISO()<INICIO_INCENTIVOS?"El programa se aplica desde el 1 de noviembre.":"Programa en vigencia."} Cada chofer tiene que saber cada falta que tiene.</p>
+    <div class="ob-k">${faltas.filter(f=>!f.avisado).length}<small>faltas sin avisar · ${chs.length} choferes con faltas</small></div>
+    ${chs.length?`<div class="lista" style="display:grid;gap:10px">${chs.map(c=>`<div class="cho"><div class="cho-h"><span>${esc(c)}</span><span class="sub">${porCh[c].length} falta${porCh[c].length>1?"s":""}</span></div>${porCh[c].sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||"")).map(f=>`<div class="falta ${f.avisado?"ok":""}"><span>${esc(fmtFecha(f.fecha))} · ${esc(f.falta)}</span><button type="button" data-av="${esc(f.id)}">${f.avisado?"Avisado ✓":"Marcar avisado"}</button></div>`).join("")}</div>`).join("")}</div>`:'<p class="sub">Sin faltas cargadas.</p>'}
+    <details class="mas"><summary>Cargar una falta</summary><div class="formx">
+      <div class="row"><input type="date" id="fa-f" value="${h}" aria-label="Fecha"><input id="fa-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"></div>
+      <div class="row"><input id="fa-d" placeholder="Falta (ej. exceso de velocidad)" aria-label="Falta"><button class="btn" type="button" id="fa-add">Agregar</button></div>
+    </div></details>`)]);
+
+  // 4 y 5. HR
+  const hrCard=(k,titulo,nota)=>{const o=M()[k]||{},c=+o.cargadas||0,t=+o.total||0,s=estadoHR(k);
+    return [k,s,card(k,titulo,s,`
+      <div class="ob-k">${c}<small>de ${t||"?"} hojas de ruta del mes</small></div>
+      <div class="bar"><i style="width:${t?Math.min(100,c/t*100):0}%"></i></div>
+      <p class="sub">${nota}</p>
+      <div class="row"><input type="number" min="0" id="${k}-c" value="${c||""}" placeholder="Cargadas" aria-label="Cargadas"><input type="number" min="0" id="${k}-t" value="${t||""}" placeholder="Total" aria-label="Total del mes"><button class="btn" type="button" data-hr="${k}">Guardar</button></div>`)]};
+  out.push(hrCard("hr_m3","HR: m3/kg en ControlPesos","App en P:\\Archivos compartidos Transtotal\\NICO\\ControlPesos."));
+  out.push(hrCard("hr_transoft","HR cargadas en Transoft","Carga de cada hoja de ruta en Transoft escritorio."));
+
+  // 6. Seguridad vial
+  const sv=M().seguridad||{},sS=estadoSV();
+  out.push(["sv",sS,card("sv","Reporte seguridad vial Air Liquide",sS,`
+    <p class="sub">No tiene vencimiento, pero hay que contestarlo todos los meses.</p>
+    ${sv.respondido?`<p>Respondido el ${esc(fmtFecha(sv.fecha))}.</p><div class="row"><button class="btn sec" type="button" id="sv-undo">Desmarcar</button></div>`:`<div class="row"><button class="btn" type="button" id="sv-ok">Marcar respondido</button></div>`}`)]);
+
+  // 7. Facturación
+  const fac=M().facturacion||{},sF=estadoFac();
+  out.push(["fac",sF,card("fac","Control facturación Air Liquide",sF,`
+    <ul class="pasos">${PASOS_FAC.map(([k,t])=>`<li><label><input type="checkbox" data-fac="${k}" ${fac[k]?"checked":""}> <span>${t}${fac[k+"_fecha"]?` <span class="sub">· ${esc(fmtFecha(fac[k+"_fecha"]))}</span>`:""}</span></label></li>`).join("")}</ul>`)]);
+
+  $("obs").innerHTML=out.map(o=>o[2]).join("")+`<datalist id="dl-ch">${choferes.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>`;
+  const cnt={ok:0,pend:0,bad:0,info:0};out.forEach(o=>cnt[o[1].c]++);
+  $("ob-res").innerHTML=[["ok","al día"],["pend","pendientes"],["bad","atrasadas"]].filter(([k])=>cnt[k]).map(([k,t])=>`<span class="chip s-${k}">${cnt[k]} ${t}</span>`).join("");
+}
+
+async function guardarMes(patch){
+  if(!db)return;
+  const ref=db.doc("mes/"+mesSel);
+  try{
+    if(mesDoc)await ref.update(patch);
+    else await ref.set({auditorias:[],hr_m3:{cargadas:0,total:0},hr_transoft:{cargadas:0,total:0},seguridad:{respondido:false},facturacion:{},...patch});
+  }catch(e){console.warn(e)}
+}
+
+function subMes(){
+  if(unsubMes)unsubMes();mesDoc=null;renderOb();
+  if(!db)return;
+  unsubMes=db.doc("mes/"+mesSel).onSnapshot(s=>{mesDoc=s.exists?s.data():null;renderOb()},e=>console.warn(e));
+}
+$("mprev").addEventListener("click",()=>{const [y,m]=mesSel.split("-").map(Number);mesSel=mesDe(new Date(y,m-2,1));subMes()});
+$("mnext").addEventListener("click",()=>{const [y,m]=mesSel.split("-").map(Number);mesSel=mesDe(new Date(y,m,1));subMes()});
+
+$("obs").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b||!db)return;
+  if(b.id==="aud-add"){const cis=$("aud-cis").value,f=$("aud-f").value||hoyISO();if(!cis)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis,fecha:f}]});return}
+  if(b.dataset.audDel!=null){const a=[...(M().auditorias||[])];a.splice(+b.dataset.audDel,1);await guardarMes({auditorias:a});return}
+  if(b.dataset.com){const id=b.dataset.com,v=$("com-"+id).value.trim();if(!v)return;b.disabled=true;try{await db.doc("excesos/"+id).update({comentario:v,comentado:new Date().toISOString()})}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.id==="ex-add"){const d={fecha:$("ex-f").value||hoyISO(),chofer:$("ex-ch").value.trim(),cis:$("ex-cis").value,tipo:$("ex-t").value,detalle:$("ex-d").value.trim(),comentario:"",origen:"manual"};if(!d.chofer&&!d.cis)return;b.disabled=true;try{await db.collection("excesos").add(d)}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.av){const f=faltas.find(x=>x.id===b.dataset.av);if(!f)return;b.disabled=true;try{await db.doc("faltas/"+f.id).update({avisado:!f.avisado,avisado_fecha:f.avisado?"":hoyISO()})}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.id==="fa-add"){const d={fecha:$("fa-f").value||hoyISO(),chofer:$("fa-ch").value.trim(),falta:$("fa-d").value.trim(),avisado:false};if(!d.chofer||!d.falta)return;b.disabled=true;try{await db.collection("faltas").add(d)}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.hr){const k=b.dataset.hr;b.disabled=true;await guardarMes({[k]:{cargadas:+$(k+"-c").value||0,total:+$(k+"-t").value||0}});b.disabled=false;return}
+  if(b.id==="sv-ok"){b.disabled=true;await guardarMes({seguridad:{respondido:true,fecha:hoyISO()}});return}
+  if(b.id==="sv-undo"){b.disabled=true;await guardarMes({seguridad:{respondido:false,fecha:""}});return}
+});
+$("obs").addEventListener("change",async e=>{
+  const c=e.target.closest("input[data-fac]");if(!c||!db)return;
+  const k=c.dataset.fac;c.disabled=true;
+  await guardarMes({facturacion:{[k]:c.checked,[k+"_fecha"]:c.checked?hoyISO():""}});
+});
+$("obs").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;const i=e.target.closest("input[id^='com-']");if(!i)return;
+  e.preventDefault();i.parentElement.querySelector("button")?.click();
+});
+
+/* ---------- Resto del tablero ---------- */
 function render(){
   const abiertas=tareas.filter(t=>t.estado!=="hecha");
   let foco=(meta.foco||[]).map(id=>tareas.find(t=>t.id===id)).filter(t=>t&&t.estado!=="hecha");
@@ -118,21 +371,36 @@ function render(){
   const an=id=>(areas.find(a=>a.id===id)||{}).nombre||"";
   $("foco").innerHTML=foco.length?foco.map(t=>`<li><b>${esc(t.titulo)}</b> <span class="sub">· ${esc(an(t.area))}</span>${t.siguiente?`<span class="sig">Paso: ${esc(t.siguiente)}</span>`:""}</li>`).join(""):'<li class="vacio">No hay tareas abiertas.</li>';
   $("nota").textContent=meta.nota||"";
+
+  const tarea=t=>`<li class="t ${esc(t.estado)} p${t.prioridad||2}"><button class="chk" data-id="${esc(t.id)}" aria-label="Cambiar estado: ${esc(t.estado)}">${t.estado==="hecha"?"✓":""}</button><span class="tt">${esc(t.titulo)}${t.actualizada?`<span class="fe">${esc(fmtFecha(t.actualizada))}</span>`:""}${t.siguiente&&t.estado!=="hecha"?`<span class="sig">${esc(t.siguiente)}</span>`:""}</span></li>`;
   $("areas").innerHTML=areas.length?[...areas].sort((a,b)=>(a.orden||0)-(b.orden||0)).map(a=>{
-    const ts=tareas.filter(t=>t.area===a.id).sort((x,y)=>(x.estado==="hecha")-(y.estado==="hecha")||(x.prioridad||2)-(y.prioridad||2));
-    return `<article class="area"><div class="area-h"><h3>${esc(a.nombre)}</h3><span class="estado e-${esc(a.estado)}">${esc(a.estado)}</span></div>
+    const ts=tareas.filter(t=>t.area===a.id).sort((x,y)=>(x.prioridad||2)-(y.prioridad||2));
+    const ab=ts.filter(t=>t.estado!=="hecha"),he=ts.filter(t=>t.estado==="hecha");
+    return `<article class="area"><div class="area-h"><h3>${esc(a.nombre)}</h3><span class="estado e-${esc(a.estado)}">${ab.length} abierta${ab.length===1?"":"s"}</span></div>
     ${a.resumen?`<p class="resumen">${esc(a.resumen)}</p>`:""}
-    <ul class="tareas">${ts.map(t=>`<li class="t ${esc(t.estado)} p${t.prioridad||2}"><button class="chk" data-id="${esc(t.id)}" aria-label="Cambiar estado: ${esc(t.estado)}">${t.estado==="hecha"?"✓":""}</button><span class="tt">${esc(t.titulo)}${t.siguiente&&t.estado!=="hecha"?`<span class="sig">${esc(t.siguiente)}</span>`:""}</span></li>`).join("")||'<li class="vacio">Sin tareas.</li>'}</ul></article>`}).join(""):'<p class="vacio">Todavía no hay áreas cargadas.</p>';
-  const sl=(salud.items||[]);
-  $("salud-ts").textContent=salud.chequeado?"Último chequeo: "+salud.chequeado:"";
-  $("salud").innerHTML=sl.length?sl.map(s=>`<li class="${esc(s.estado)}"><span class="sn"><span class="dot"></span>${esc(s.nombre)}</span><span class="sd">${esc(s.detalle)}</span></li>`).join(""):'<li class="vacio">Sin chequeo todavía.</li>';
-  const fl=(flota.unidades||[]);
-  $("flota-ts").textContent=flota.generado?"Transdat + SMP · "+flota.generado:"";
-  const hs=h=>h==null?"—":h<0.5?"ahora":h<48?Math.round(h)+" h":Math.round(h/24)+" d";
-  if(fl.length) $("flota").innerHTML=fl.map(u=>{const cls=u.alerta?"alerta":(u.hs>24?"off":(u.vel>5?"mov":""));return `<tr class="${cls}"><td class="cis">${esc(u.cis)}</td><td>${esc(u.tractor||"—")}</td><td>${esc(u.chofer||"—")}${u.alerta?` <span class="sub">· ${esc(u.alerta)}</span>`:""}</td><td class="v">${u.vel} km/h</td><td>${hs(u.hs)}</td></tr>`}).join("");
+    <ul class="tareas">${ab.map(tarea).join("")||'<li class="vacio">Sin tareas abiertas.</li>'}</ul>
+    ${he.length?`<details class="hechas"><summary>Ver hechas (${he.length})</summary><ul class="tareas">${he.map(tarea).join("")}</ul></details>`:""}</article>`}).join(""):'<p class="vacio">Todavía no hay áreas cargadas.</p>';
+  $("areas-n").textContent=abiertas.length?abiertas.length+" tareas abiertas":"";
   $("na").innerHTML=areas.map(a=>`<option value="${esc(a.id)}">${esc(a.nombre)}</option>`).join("");
+
+  // Salud
+  const sl=(salud.items||[]),dS=parseAR(salud.chequeado),vS=horasViejo(dS);
+  $("salud-ts").innerHTML=salud.chequeado?(vS?`<p class="viejo">Último chequeo: ${esc(salud.chequeado)}, hace ${hs(vS)}. Puede que la tarea de la PC no esté corriendo.</p>`:"Último chequeo: "+esc(salud.chequeado)):"";
+  $("salud").innerHTML=sl.length?sl.map(s=>`<li class="${esc(s.estado)}"><span class="sn"><span class="dot"></span>${esc(s.nombre)}</span><span class="sd">${esc(s.detalle)}</span></li>`).join(""):'<li class="vacio">Sin chequeo todavía.</li>';
+
+  // Flota
+  const fl=(flota.unidades||[]),dF=parseAR(flota.generado),extra=dF?Math.max(0,(Date.now()-dF)/36e5):0,vF=horasViejo(dF);
+  $("flota-ts").innerHTML=flota.generado?(vF?`<p class="viejo">Datos del ${esc(flota.generado)} (hace ${hs(vF)}). Las velocidades no son de ahora.</p>`:"Transdat + SMP · "+esc(flota.generado)):"";
+  if(fl.length){
+    const real=u=>u.hs==null?null:u.hs+extra;
+    const rep=fl.filter(u=>u.hs<=24),sin=fl.filter(u=>!(u.hs<=24));
+    const mov=rep.filter(u=>u.vel>5).length,sinCh=rep.filter(u=>!u.chofer).length;
+    $("kpis").innerHTML=`<span><b>${fl.length}</b>unidades</span><span><b>${mov}</b>en movimiento</span><span><b>${rep.length-mov}</b>detenidas</span><span><b>${sin.length}</b>sin reportar</span>${sinCh?`<span class="s-bad"><b>${sinCh}</b>sin chofer logueado</span>`:""}`;
+    const fila=u=>{const cls=u.alerta?"alerta":(u.hs>24?"off":(u.vel>5&&!vF?"mov":""));return `<tr class="${cls}"><td class="cis">${esc(u.cis)}</td><td>${esc(u.tractor||"—")}</td><td>${u.chofer?esc(u.chofer):(u.hs>24?"—":'<span class="sinch">Sin chofer (iButton)</span>')}${u.alerta?` <span class="sub">· ${esc(u.alerta)}</span>`:""}</td><td class="v">${u.vel} km/h</td><td>${hs(real(u))}</td></tr>`};
+    $("flota").innerHTML=rep.map(fila).join("")+(sin.length?`<tr class="sep"><td colspan="5">Sin reportar hace más de un día</td></tr>`+sin.map(fila).join(""):"");
+  }
 }
-render();
+render();renderOb();
 
 document.addEventListener("click",async e=>{
   const b=e.target.closest("button.chk");if(!b||!db)return;
@@ -146,15 +414,21 @@ $("add").addEventListener("submit",async e=>{
   const titulo=$("nt").value.trim();if(!titulo)return;
   try{await db.collection("tareas").add({titulo,area:$("na").value,prioridad:+$("np").value,estado:"pendiente",orden:99,actualizada:new Date().toISOString()});$("nt").value=""}catch(err){console.warn(err)}
 });
+try{if(localStorage.getItem("areasAbiertas")==="1")$("areas-box").open=true}catch(e){}
+$("areas-box").addEventListener("toggle",()=>{try{localStorage.setItem("areasAbiertas",$("areas-box").open?"1":"0")}catch(e){}});
+setInterval(()=>{render()},5*60*1000);
 
 (async()=>{
   db=await claude.use("db");
-  if(!db){$("foco").innerHTML='<li class="vacio">No se pudo conectar con los datos del tablero.</li>';$("areas").innerHTML="";return}
+  if(!db){$("foco").innerHTML='<li class="vacio">No se pudo conectar con los datos del tablero.</li>';$("obs").innerHTML='<p class="vacio">No se pudo conectar con los datos del tablero.</p>';$("areas").innerHTML="";return}
   const err=e=>console.warn(e);
   db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
   db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
-  db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render()},err);
+  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
+  db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
+  db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
   db.doc("meta/salud").onSnapshot(s=>{salud=s.exists?s.data():{};render()},err);
   db.doc("meta/hoy").onSnapshot(s=>{meta=s.exists?s.data():{};render()},err);
+  subMes();
 })();
 </script>
