@@ -238,7 +238,8 @@ function estadoAud(){
   if(d>=22)return st("bad","Atrasada");
   return st("pend","En curso");
 }
-function excesosPend(){return excesos.filter(e=>!(e.comentario||"").trim())}
+const noRequiere=e=>e.requiere===false;
+function excesosPend(){return excesos.filter(e=>!noRequiere(e)&&!(e.comentario||"").trim())}
 function estadoExc(){
   const p=excesosPend(),h=hoyISO();
   if(!p.length)return st("ok","Al día");
@@ -286,13 +287,15 @@ function renderOb(){
 
   // 2. Excesos
   const pend=excesosPend(),sE=estadoExc(),h=hoyISO();
-  const visibles=excesos.filter(e=>!(e.comentario||"").trim()||e.fecha===h).sort((a,b)=>(!!(a.comentario||"").trim())-(!!(b.comentario||"").trim())||(a.fecha||"").localeCompare(b.fecha||""));
+  const desest=excesos.filter(e=>noRequiere(e)&&!(e.comentario||"").trim()).sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  const visibles=excesos.filter(e=>!noRequiere(e)&&(!(e.comentario||"").trim()||e.fecha===h)).sort((a,b)=>(!!(a.comentario||"").trim())-(!!(b.comentario||"").trim())||(a.fecha||"").localeCompare(b.fecha||""));
   out.push(["exc",sE,card("exc","Excesos: comentario de cada uno",sE,`
     <div class="ob-k">${pend.length}<small>sin comentario · ${excesos.filter(e=>e.fecha===h).length} hoy</small></div>
     ${visibles.length?`<ul class="lista">${visibles.map(e=>{const ok=!!(e.comentario||"").trim();return `<li class="ex ${ok?"hecho":""}">
       <span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}${e.detalle?` <span class="sub">(${esc(e.detalle)})</span>`:""}</span>
       ${ok?`<span class="com">“${esc(e.comentario)}”${e.resultado==="falta"?'<span class="res s-bad">Falta</span>':e.resultado==="justificado"?'<span class="res s-ok">Justificado</span>':""}</span>`:`<div class="row"><input id="com-${esc(e.id)}" placeholder="Qué dijo el chofer / motivo" aria-label="Comentario"></div><div class="row"><button class="btn sec" type="button" data-com="${esc(e.id)}" data-res="justificado">Justificado</button><button class="btn" type="button" data-com="${esc(e.id)}" data-res="falta">Cuenta como falta</button></div>`}
     </li>`}).join("")}</ul>`:'<p class="sub">No hay excesos pendientes.</p>'}
+    ${desest.length?`<details class="mas"><summary>No requieren justificación: ${desest.length}</summary><ul class="lista">${desest.map(e=>`<li class="ex hecho"><span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}</span><span class="com">${esc(e.motivo||"")}</span></li>`).join("")}</ul></details>`:""}
     <details class="mas"><summary>Cargar un exceso a mano</summary><div class="formx">
       <div class="row"><input type="date" id="ex-f" value="${h}" aria-label="Fecha"><input id="ex-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"><select id="ex-cis" aria-label="Cisterna"><option value="">Cisterna</option>${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div>
       <div class="row"><select id="ex-t" aria-label="Tipo"><option>Jornada</option><option>Manejo continuo</option><option>Velocidad</option><option>Otro</option></select><input id="ex-d" placeholder="Detalle (ej. 5:21 h continuas)" aria-label="Detalle"><button class="btn" type="button" id="ex-add">Agregar</button></div>
