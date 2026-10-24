@@ -1,0 +1,11 @@
+{
+  "_ayuda": "Una entrada por chofer. 'inicioRacha' es el primer día de la racha actual (YYYY-MM-DD): el bot cuenta los días desde esa fecha en lugar de los que calculó. 'vence' es opcional: pasada esa fecha la excepción se ignora. El nombre se compara sin acentos ni mayúsculas, en cualquier orden (Broya Marcos = Marcos Broya).",
+  "excepciones": [
+    {
+      "chofer": "Broya Marcos",
+      "inicioRacha": "2026-10-23",
+      "motivo": "Descansó 33 h entre el 21/10 21:21 y el 23/10 06:26 (menos de las 36 h que corta la racha). Se acepta como descanso: el 23/10 es día 1 y el 24/10 día 2.",
+      "vence": "2026-11-15"
+    }
+  ]
+}
