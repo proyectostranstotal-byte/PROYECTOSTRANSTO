@@ -596,27 +596,24 @@ function guardarFoto(k,data){
   if(ultGuardado[k]&&ahora-ultGuardado[k]<110000)return;ultGuardado[k]=ahora;
   db.doc("meta/vivo_"+k).set(data).catch(e=>console.warn(e));
 }
-function conVivo(k,tool,cada){
-  return mcp.watchTool(HOST,tool,null,ev=>{
-    if(ev.type==="data"){const p=ev.result.payload;if(!p)return;vivo[k]=p;if(k==="flota"){vivo.live=true;vivo.err=""}renderVivo();if(!ev.result.cache||!ev.result.cache.revalidating)guardarFoto(k,p)}
-    else{console.warn(tool,ev.error);if(k==="flota"){vivo.live=false;vivo.err=errTxt(ev.error);renderVivo()}}
-  },{refetchInterval:cada});
+// Los watchTool no llegan a los servidores host: del visor, así que se lee con callTool y un intervalo propio.
+async function leerVivo(k,tool){
+  try{
+    const r=await mcp.callTool(HOST,tool,{},{cache:false});const p=r?.payload;if(!p)return;
+    vivo[k]=p;if(k==="flota"){vivo.live=true;vivo.err=""}renderVivo();guardarFoto(k,p);
+  }catch(e){console.warn(tool,e);if(k==="flota"){vivo.live=false;vivo.err=errTxt(e);renderVivo()}}
 }
 const errTxt=e=>{const c=e?.code||"";return ({approval_required:"falta tu permiso: tocá Conectar con la PC",not_in_manifest:"el permiso está rechazado: tocá Conectar con la PC",server_not_connected:"la app no encuentra el puente \"transtotal\" (server_not_connected)",not_granted:"falta dar permiso (not_granted)",cancelled:"se canceló el permiso (cancelled)",blocked_by_policy:"bloqueado por política (blocked_by_policy)"})[c]||((c||"error")+(e?.message?": "+e.message:""))};
-let unsubs=[];
+let timers=[];
 function arrancarVivo(){
-  unsubs.forEach(u=>{try{u()}catch(e){}});
-  unsubs=[conVivo("flota","flota_ahora",120000),conVivo("bots","estado_bots",300000),conVivo("nov","novedades",300000)];
-  // Si en 20 s no llegó nada ni un error, decirlo en vez de quedar en "Conectando…"
-  setTimeout(async()=>{if(vivo.live||vivo.err)return;let d="";
-    try{const lt=await mcp.listTools(HOST);const sv=(lt.servers||[]).find(x=>x.server===HOST);d=sv?("el puente figura ("+(sv.authStatus||"?")+") pero no respondió"):"la app no lista el puente"}catch(e){d=errTxt(e)}
-    try{const pm=await claude.use("permissions");if(pm){const st=await pm.state("mcp:"+HOST);d+=" · permiso: "+st}}catch(e){}
-    if(!vivo.live){vivo.err=d+". Tocá Conectar con la PC.";renderVivo()}},20000);
+  timers.forEach(clearInterval);
+  const cada=(k,tool,ms)=>{leerVivo(k,tool);timers.push(setInterval(()=>{if(!document.hidden)leerVivo(k,tool)},ms))};
+  cada("flota","flota_ahora",120000);cada("bots","estado_bots",300000);cada("nov","novedades",300000);
 }
 $("vivo-con").addEventListener("click",async()=>{
   const b=$("vivo-con");b.disabled=true;vivo.err="";$("vivo-tst").textContent="Pidiendo permiso…";
   try{const pm=await claude.use("permissions");if(pm)await pm.request(["mcp:"+HOST])}catch(e){}
-  try{const r=await mcp.callTool(HOST,"flota_ahora",{});if(r?.payload){vivo.flota=r.payload;vivo.live=true;guardarFoto("flota",r.payload)}mcp.invalidate(HOST).catch(()=>{});arrancarVivo()}
+  try{const r=await mcp.callTool(HOST,"flota_ahora",{},{cache:false});if(r?.payload){vivo.flota=r.payload;vivo.live=true;vivo.err="";guardarFoto("flota",r.payload)}arrancarVivo()}
   catch(e){vivo.err=errTxt(e)}
   b.disabled=false;renderVivo();
 });
