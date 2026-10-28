@@ -1,0 +1,30 @@
+{
+ "chequeado": "21/10/2026 15:35",
+ "items": [
+  {
+   "detalle": "1 exceso de jornada, 0 de manejo. Mail enviado.",
+   "estado": "ok",
+   "nombre": "Controlar excesos (08:00)"
+  },
+  {
+   "detalle": "6 avisos enviados, 0 fallidos.",
+   "estado": "ok",
+   "nombre": "SICOP Vencimientos (09:00)"
+  },
+  {
+   "detalle": "11 mensajes enviados. Sin chofer logueado: 570, 672.",
+   "estado": "ok",
+   "nombre": "Jornada bot Diario (14:00)"
+  },
+  {
+   "detalle": "Ayer: 8 recordatorios enviados. Hoy corre a las 22:00.",
+   "estado": "ok",
+   "nombre": "Jornada bot Post (22:00)"
+  },
+  {
+   "detalle": "Última corrida: lunes 19/10.",
+   "estado": "ok",
+   "nombre": "Excesos velocidad semanal (lun 07:30)"
+  }
+ ]
+}

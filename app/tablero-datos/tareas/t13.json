@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 13,
+ "prioridad": 2,
+ "siguiente": "Los 7 pasos ya están armados: pasarlos a Claude Code con el token de SMP Logistics.",
+ "titulo": "Inicio real de jornada desde Wialon (primer movimiento >1 km)"
+}

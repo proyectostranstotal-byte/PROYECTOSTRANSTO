@@ -1,0 +1,31 @@
+{
+  "transdat": {
+    "url": "https://clientes.transdat.com.ar",
+    "credenciales": "C:\\ExcesosVelocidad\\transdat.json"
+  },
+  "wialon": { "modulo": "C:\\jornada-bot\\panel\\choferes-wialon.js" },
+  "base": { "nombre": "Transtotal Ibarlucea", "lat": -32.8639, "lng": -60.7676, "radio_km": 1.0 },
+  "umbrales": { "sin_senal_min": 30, "mov_kmh": 5 },
+  "excluir": [],
+  "archivos": {
+    "estado_choferes": "C:\\jornada-bot\\estado-choferes.json",
+    "choferes": "C:\\jornada-bot\\choferes.json",
+    "indice_hr": "C:\\jornada-bot\\hr-entrada\\_indice.json"
+  },
+  "tareas": [
+    { "id": "recibir-hr", "nombre": "Recibir HR de WhatsApp", "tipo": "windows", "tarea": "Jornada bot HR", "ejecutar": true,
+      "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "recibir-hr_", "max_horas": 3 } },
+    { "id": "procesar-hr", "nombre": "Procesar HR", "tipo": "comando", "comando": "python", "args": ["C:\\jornada-bot\\procesar-hr.py"], "cwd": "C:\\jornada-bot", "ejecutar": false, "aviso": "Necesita a Claude para leer las HR (tarea procesar-hr de la app): no se ejecuta desde el panel.",
+      "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "procesar-hr_", "max_horas": 3 } },
+    { "id": "controlar-excesos", "nombre": "Controlar excesos", "tipo": "windows", "tarea": "Controlar excesos", "ejecutar": true, "aviso": "Vuelve a mandar el mail de excesos.",
+      "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "controlar-excesos_" } },
+    { "id": "jornada-diario", "nombre": "Jornada bot diario", "tipo": "windows", "tarea": "Jornada bot Diario", "ejecutar": false, "aviso": "Manda WhatsApp a los choferes: no se ejecuta desde el panel.",
+      "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "ejecutar_" } },
+    { "id": "jornada-post", "nombre": "Recordatorio checklist post", "tipo": "windows", "tarea": "Jornada bot Post", "ejecutar": false,
+      "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "recordar-post_" } },
+    { "id": "sicop", "nombre": "SICOP vencimientos", "tipo": "windows", "tarea": "SICOP Vencimientos", "ejecutar": false,
+      "log": { "carpeta": "C:\\SICOP\\sicop\\whatsapp\\logs", "prefijo": "ciclo_" } },
+    { "id": "excesos-velocidad", "nombre": "Excesos de velocidad semanal", "tipo": "windows", "tarea": "Excesos velocidad semanal", "ejecutar": false,
+      "log": { "carpeta": "C:\\ExcesosVelocidad\\logs", "prefijo": "semanal_" } }
+  ]
+}

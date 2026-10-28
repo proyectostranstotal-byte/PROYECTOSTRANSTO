@@ -1,0 +1,643 @@
+<title>Tablero Transtotal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: hoja de ruta — obligaciones del mes arriba, luego "Hoy", bots, flota y áreas plegadas */
+:root{
+  --bg:#f3f4f2;--surface:#ffffff;--ink:#1d232a;--muted:#5d6670;--line:#d9ddd8;
+  --accent:#c98a00;--accent-soft:#fbefd2;--ok:#2f7d4f;--ok-soft:#e1f0e6;--doing:#2b62a8;
+  --bad:#b8382b;--bad-soft:#f8e1de;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--ok-soft:#183324;--doing:#79a8e8;
+  --bad:#ef7a6c;--bad-soft:#3d1d1a;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15191d;--surface:#1e2328;--ink:#e7e9e6;--muted:#9aa3ab;--line:#30363c;
+  --accent:#f0b429;--accent-soft:#3a2f14;--ok:#5cbf83;--ok-soft:#183324;--doing:#79a8e8;
+  --bad:#ef7a6c;--bad-soft:#3d1d1a;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:3px solid var(--ink);padding-bottom:10px}
+h1{font-family:var(--f-display);font-size:2.4rem;line-height:1;margin:0;letter-spacing:.01em;text-transform:uppercase}
+.fecha{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+h2{font-family:var(--f-display);font-size:1.3rem;text-transform:uppercase;letter-spacing:.06em;margin:0}
+section{display:grid;gap:12px;min-width:0}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.sub{font-size:.85rem;color:var(--muted)}
+.vacio{color:var(--muted);font-style:italic}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select{font:inherit;padding:5px 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.btn{font:600 .85rem var(--f-body);padding:6px 12px;border:0;background:var(--ink);color:var(--bg)}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Obligaciones */
+.mesnav{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.85rem}
+.mesnav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);width:28px;height:28px;padding:0}
+.mesnav span{min-width:9em;text-align:center;text-transform:capitalize}
+.resumen-ob{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border:1px solid currentColor;white-space:nowrap}
+.s-ok{color:var(--ok)}.s-pend{color:var(--accent)}.s-bad{color:var(--bad)}.s-info{color:var(--doing)}
+.obs{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;align-items:start}
+.ob{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--line);padding:12px 14px 14px;display:grid;gap:10px;min-width:0}
+.ob.st-ok{border-top-color:var(--ok)}.ob.st-pend{border-top-color:var(--accent)}.ob.st-bad{border-top-color:var(--bad)}.ob.st-info{border-top-color:var(--doing)}
+.ob-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ob-h h3{font-family:var(--f-display);font-size:1.25rem;margin:0;text-wrap:balance}
+.ob-k{font-family:var(--f-display);font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.ob-k small{font-family:var(--f-body);font-size:.85rem;color:var(--muted);margin-left:6px}
+.ob p{margin:0}
+.bar{height:6px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row input{flex:1 1 90px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.tags li{font-family:var(--f-mono);font-size:.8rem;border:1px solid var(--line);padding:2px 4px 2px 8px;display:flex;align-items:center;gap:4px}
+.tags button{border:0;background:transparent;color:var(--muted);padding:0 4px}
+.pasos{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pasos label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.pasos input{margin-top:3px;accent-color:var(--ok)}
+.lista{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:340px;overflow-y:auto}
+.ex{border-left:3px solid var(--accent);padding:4px 0 4px 10px;display:grid;gap:4px;min-width:0}
+.ex.hecho{border-left-color:var(--ok)}
+.ex .exh{font-size:.9rem}
+.ex .exh b{font-family:var(--f-mono);font-weight:500}
+.ex .com{font-size:.88rem;color:var(--muted)}
+.ex .res{font-family:var(--f-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-left:6px}
+.sug{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sug li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;flex-wrap:wrap}
+.sug b{font-family:var(--f-mono);font-weight:500}
+.sug .base{color:var(--ok);font-weight:600}
+.sug button{font-size:.78rem;padding:2px 8px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.sug li.hecha{opacity:.55}
+.cho{display:grid;gap:4px;min-width:0}
+.cho-h{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.falta{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;align-items:center}
+.falta.ok span{color:var(--muted);text-decoration:line-through}
+.falta button{flex:none;font-size:.78rem;padding:2px 8px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.falta.ok button{color:var(--ok);border-color:var(--ok)}
+details.mas summary{cursor:pointer;font-size:.85rem;color:var(--muted)}
+details.mas[open] summary{margin-bottom:8px}
+.formx{display:grid;gap:6px}
+.formx .row input,.formx .row select{flex:1 1 120px}
+
+/* Hoy */
+.hoy{background:var(--accent-soft);border-left:6px solid var(--accent);padding:16px 18px;display:grid;gap:10px}
+.hoy ol{margin:0;padding-left:1.3em;display:grid;gap:8px}
+.hoy li b{font-weight:600}
+.hoy .nota{color:var(--muted);margin:0;text-wrap:pretty}
+.sig{display:block;font-size:.82rem;color:var(--muted)}
+
+/* Aviso de datos viejos */
+.viejo{background:var(--bad-soft);color:var(--ink);border-left:4px solid var(--bad);padding:6px 10px;font-size:.88rem;margin:0}
+
+/* Salud */
+.salud{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.salud li{background:var(--surface);border:1px solid var(--line);padding:10px 12px;display:grid;gap:2px;min-width:0}
+.salud .sn{font-weight:600;display:flex;align-items:center;gap:8px}
+.salud .dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
+.salud .ok .dot{background:var(--ok)}.salud .warn .dot{background:var(--accent)}.salud .fail .dot{background:var(--bad)}
+.salud .sd{font-size:.85rem;color:var(--muted)}
+
+/* Flota */
+.kpis{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.9rem}
+.kpis b{font-family:var(--f-display);font-size:1.4rem;font-variant-numeric:tabular-nums;margin-right:4px}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
+table.flota{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
+.flota th,.flota td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.flota th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted)}
+.flota .cis{font-family:var(--f-mono)}
+.flota tr.mov td.v{color:var(--doing);font-weight:600}
+.flota tr.alerta td{background:var(--accent-soft)}
+.flota tr.off td{color:var(--muted)}
+.flota tr.sep td{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;color:var(--muted);background:var(--bg)}
+.flota .sinch{color:var(--bad);font-size:.82rem}
+
+/* Áreas */
+details.areas-box>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px}
+details.areas-box>summary::-webkit-details-marker{display:none}
+details.areas-box>summary::before{content:"▸";color:var(--muted)}
+details.areas-box[open]>summary::before{content:"▾"}
+details.areas-box[open]>summary{margin-bottom:12px}
+.areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+.area{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;gap:10px;min-width:0}
+.area-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.area-h h3{font-family:var(--f-display);font-size:1.25rem;margin:0;text-wrap:balance}
+.estado{font-family:var(--f-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border:1px solid currentColor;white-space:nowrap}
+.e-activo{color:var(--doing)}.e-idea{color:var(--muted)}.e-rutina{color:var(--ok)}
+.resumen{margin:0;color:var(--muted);font-size:.9rem}
+ul.tareas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.t{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.t button.chk{width:22px;height:22px;border:2px solid var(--muted);background:transparent;font:700 12px var(--f-mono);color:var(--surface);padding:0;margin-top:1px}
+.t.en_curso button.chk{border-color:var(--doing);background:linear-gradient(90deg,var(--doing) 50%,transparent 50%)}
+.t.hecha button.chk{border-color:var(--ok);background:var(--ok)}
+.t.hecha .tt{text-decoration:line-through;color:var(--muted)}
+.tt{min-width:0}
+.fe{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);margin-left:6px}
+.p1 .tt::before{content:"▲ ";color:var(--accent);font-size:.75em}
+.hechas summary{cursor:pointer;font-size:.82rem;color:var(--muted)}
+.hechas ul{margin-top:6px}
+form.add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:12px}
+form.add input{flex:1 1 220px}
+.leyenda{font-size:.8rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+
+/* Leaflet 1.9.4 */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane > svg,.leaflet-pane > canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0;}.leaflet-container{overflow:hidden;}.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none;}.leaflet-tile::selection{background:transparent;}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast;}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0;}.leaflet-marker-icon,.leaflet-marker-shadow{display:block;}.leaflet-container .leaflet-overlay-pane svg{max-width:none !important;max-height:none !important;}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer,.leaflet-container .leaflet-tile{max-width:none !important;max-height:none !important;width:auto;padding:0;}.leaflet-container img.leaflet-tile{mix-blend-mode:plus-lighter;}.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y;}.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:none;touch-action:pinch-zoom;}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{-ms-touch-action:none;touch-action:none;}.leaflet-container{-webkit-tap-highlight-color:transparent;}.leaflet-container a{-webkit-tap-highlight-color:rgba(51,181,229,0.4);}.leaflet-tile{filter:inherit;visibility:hidden;}.leaflet-tile-loaded{visibility:inherit;}.leaflet-zoom-box{width:0;height:0;-moz-box-sizing:border-box;box-sizing:border-box;z-index:800;}.leaflet-overlay-pane svg{-moz-user-select:none;}.leaflet-pane{z-index:400;}.leaflet-tile-pane{z-index:200;}.leaflet-overlay-pane{z-index:400;}.leaflet-shadow-pane{z-index:500;}.leaflet-marker-pane{z-index:600;}.leaflet-tooltip-pane{z-index:650;}.leaflet-popup-pane{z-index:700;}.leaflet-map-pane canvas{z-index:100;}.leaflet-map-pane svg{z-index:200;}.leaflet-vml-shape{width:1px;height:1px;}.lvml{behavior:url(#default#VML);display:inline-block;position:absolute;}.leaflet-control{position:relative;z-index:800;pointer-events:visiblePainted;pointer-events:auto;}.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none;}.leaflet-top{top:0;}.leaflet-right{right:0;}.leaflet-bottom{bottom:0;}.leaflet-left{left:0;}.leaflet-control{float:left;clear:both;}.leaflet-right .leaflet-control{float:right;}.leaflet-top .leaflet-control{margin-top:10px;}.leaflet-bottom .leaflet-control{margin-bottom:10px;}.leaflet-left .leaflet-control{margin-left:10px;}.leaflet-right .leaflet-control{margin-right:10px;}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity 0.2s linear;-moz-transition:opacity 0.2s linear;transition:opacity 0.2s linear;}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1;}.leaflet-zoom-animated{-webkit-transform-origin:0 0;-ms-transform-origin:0 0;transform-origin:0 0;}svg.leaflet-zoom-animated{will-change:transform;}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform 0.25s cubic-bezier(0,0,0.25,1);-moz-transition:-moz-transform 0.25s cubic-bezier(0,0,0.25,1);transition:transform 0.25s cubic-bezier(0,0,0.25,1);}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{-webkit-transition:none;-moz-transition:none;transition:none;}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden;}.leaflet-interactive{cursor:pointer;}.leaflet-grab{cursor:-webkit-grab;cursor:-moz-grab;cursor:grab;}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair;}.leaflet-popup-pane,.leaflet-control{cursor:auto;}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable{cursor:move;cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing;}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-image-layer,.leaflet-pane > svg path,.leaflet-tile-container{pointer-events:none;}.leaflet-marker-icon.leaflet-interactive,.leaflet-image-layer.leaflet-interactive,.leaflet-pane > svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path{pointer-events:visiblePainted;pointer-events:auto;}.leaflet-container{background:#ddd;outline-offset:1px;}.leaflet-container a{color:#0078A8;}.leaflet-zoom-box{border:2px dotted #38f;background:rgba(255,255,255,0.5);}.leaflet-container{font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:12px;font-size:0.75rem;line-height:1.5;}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,0.65);border-radius:4px;}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:black;}.leaflet-bar a,.leaflet-control-layers-toggle{background-position:50% 50%;background-repeat:no-repeat;display:block;}.leaflet-bar a:hover,.leaflet-bar a:focus{background-color:#f4f4f4;}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px;}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none;}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb;}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px;}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px;}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px;}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px 'Lucida Console',Monaco,monospace;text-indent:1px;}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px;}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,0.4);background:#fff;border-radius:5px;}.leaflet-control-layers-toggle{background-image:url(images/layers.png);width:36px;height:36px;}.leaflet-retina .leaflet-control-layers-toggle{background-image:url(images/layers-2x.png);background-size:26px 26px;}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px;}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none;}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative;}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff;}.leaflet-control-layers-scrollbar{overflow-y:scroll;overflow-x:hidden;padding-right:5px;}.leaflet-control-layers-selector{margin-top:2px;position:relative;top:1px;}.leaflet-control-layers label{display:block;font-size:13px;font-size:1.08333em;}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px;}.leaflet-default-icon-path{background-image:url(images/marker-icon.png);}.leaflet-container .leaflet-control-attribution{background:#fff;background:rgba(255,255,255,0.8);margin:0;}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4;}.leaflet-control-attribution a{text-decoration:none;}.leaflet-control-attribution a:hover,.leaflet-control-attribution a:focus{text-decoration:underline;}.leaflet-attribution-flag{display:inline !important;vertical-align:baseline !important;width:1em;height:0.6669em;}.leaflet-left .leaflet-control-scale{margin-left:5px;}.leaflet-bottom .leaflet-control-scale{margin-bottom:5px;}.leaflet-control-scale-line{border:2px solid #777;border-top:none;line-height:1.1;padding:2px 5px 1px;white-space:nowrap;-moz-box-sizing:border-box;box-sizing:border-box;background:rgba(255,255,255,0.8);text-shadow:1px 1px #fff;}.leaflet-control-scale-line:not(:first-child){border-top:2px solid #777;border-bottom:none;margin-top:-2px;}.leaflet-control-scale-line:not(:first-child):not(:last-child){border-bottom:2px solid #777;}.leaflet-touch .leaflet-control-attribution,.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar{box-shadow:none;}.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar{border:2px solid rgba(0,0,0,0.2);background-clip:padding-box;}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px;}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px;}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px;font-size:1.08333em;min-height:1px;}.leaflet-popup-content p{margin:17px 0;margin:1.3em 0;}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none;}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;-webkit-transform:rotate(45deg);-moz-transform:rotate(45deg);-ms-transform:rotate(45deg);transform:rotate(45deg);}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:white;color:#333;box-shadow:0 3px 14px rgba(0,0,0,0.4);}.leaflet-container a.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:transparent;}.leaflet-container a.leaflet-popup-close-button:hover,.leaflet-container a.leaflet-popup-close-button:focus{color:#585858;}.leaflet-popup-scrolled{overflow:auto;}.leaflet-oldie .leaflet-popup-content-wrapper{-ms-zoom:1;}.leaflet-oldie .leaflet-popup-tip{width:24px;margin:0 auto;-ms-filter:"progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678,M12=0.70710678,M21=-0.70710678,M22=0.70710678)";filter:progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678,M12=0.70710678,M21=-0.70710678,M22=0.70710678);}.leaflet-oldie .leaflet-control-zoom,.leaflet-oldie .leaflet-control-layers,.leaflet-oldie .leaflet-popup-content-wrapper,.leaflet-oldie .leaflet-popup-tip{border:1px solid #999;}.leaflet-div-icon{background:#fff;border:1px solid #666;}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,0.4);}.leaflet-tooltip.leaflet-interactive{cursor:pointer;pointer-events:auto;}.leaflet-tooltip-top:before,.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{position:absolute;pointer-events:none;border:6px solid transparent;background:transparent;content:"";}.leaflet-tooltip-bottom{margin-top:6px;}.leaflet-tooltip-top{margin-top:-6px;}.leaflet-tooltip-bottom:before,.leaflet-tooltip-top:before{left:50%;margin-left:-6px;}.leaflet-tooltip-top:before{bottom:0;margin-bottom:-12px;border-top-color:#fff;}.leaflet-tooltip-bottom:before{top:0;margin-top:-12px;margin-left:-6px;border-bottom-color:#fff;}.leaflet-tooltip-left{margin-left:-6px;}.leaflet-tooltip-right{margin-left:6px;}.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{top:50%;margin-top:-6px;}.leaflet-tooltip-left:before{right:0;margin-right:-12px;border-left-color:#fff;}.leaflet-tooltip-right:before{left:0;margin-left:-12px;border-right-color:#fff;}@media print{.leaflet-control{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+
+/* Distribución en vivo */
+.vivo-g{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media (max-width:900px){.vivo-g{grid-template-columns:1fr}}
+.mapa{height:460px;border:1px solid var(--line);background:var(--surface);position:relative;z-index:0}
+@media (max-width:600px){.mapa{height:340px}}
+.vivo-ts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.vivo-ts .dotv{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.vivo-ts.live .dotv{background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.est-en_viaje{--c:var(--ok)}.est-detenida{--c:var(--accent)}.est-en_base{--c:var(--doing)}.est-sin_senal{--c:var(--muted)}
+.kv{display:flex;flex-wrap:wrap;gap:6px}
+.kv button{font:600 .8rem var(--f-body);border:1px solid var(--c,var(--line));color:var(--c,var(--ink));background:var(--surface);padding:3px 9px}
+.kv button[aria-pressed="true"]{background:var(--c,var(--ink));color:var(--surface)}
+.kv b{font-family:var(--f-display);font-size:1.05rem;margin-right:4px}
+.pin{font:600 11px var(--f-mono);color:#fff;background:var(--c);border:2px solid #fff;border-radius:11px;padding:1px 5px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.35);transform:translate(-50%,-50%);position:absolute}
+.pin.sel{outline:3px solid var(--ink)}
+.ciudad{font:600 10px var(--f-body);color:var(--muted);white-space:nowrap;text-shadow:0 0 3px var(--surface);transform:translate(-50%,-50%);position:absolute}
+.leaflet-container{font-family:var(--f-body);background:var(--bg)}
+.leaflet-popup-content{margin:10px 12px;font-size:.88rem;line-height:1.4}
+.leaflet-popup-content b{font-family:var(--f-mono);font-weight:500}
+.panel-lat{display:grid;gap:14px;min-width:0}
+.caja{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:grid;gap:8px;min-width:0}
+.caja h3{font-family:var(--f-display);font-size:1.1rem;text-transform:uppercase;letter-spacing:.05em;margin:0}
+.nov{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:260px;overflow-y:auto}
+.nov li{border-left:3px solid var(--c,var(--line));padding:2px 0 2px 8px;font-size:.88rem}
+.nov .h{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);margin-right:6px}
+.nov .t-hr{--c:var(--doing)}.nov .t-exc{--c:var(--accent)}.nov .t-bot_warn{--c:var(--accent)}.nov .t-bot_fail{--c:var(--bad)}
+.tar{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.tar li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;font-size:.88rem}
+.tar .dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--muted)}
+.tar .ok .dot,.tar li.ok .dot{background:var(--ok)}.tar li.warn .dot{background:var(--accent)}.tar li.fail .dot{background:var(--bad)}
+.tar .d{display:block;font-size:.8rem;color:var(--muted)}
+.tar button{font-size:.78rem;padding:3px 9px;border:1px solid var(--ink);background:transparent;color:var(--ink);white-space:nowrap}
+.tar button:disabled{opacity:.5;cursor:default}
+.tar .res{display:block;font-size:.78rem;color:var(--ok)}
+.tar .res.err{color:var(--bad)}
+table.vivo{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.88rem}
+.vivo th,.vivo td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.vivo th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:.78rem;color:var(--muted)}
+.vivo td.cis{font-family:var(--f-mono)}
+.vivo td.dir{white-space:normal;min-width:180px;color:var(--muted);font-size:.82rem}
+.vivo tr{cursor:pointer}
+.vivo tr:hover td{background:var(--bg)}
+.vivo .st{display:inline-flex;align-items:center;gap:6px}
+.vivo .st::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<div class="wrap">
+  <header>
+    <h1>Tablero Transtotal</h1>
+    <span class="fecha" id="fecha"></span>
+  </header>
+
+  <section aria-labelledby="vivo-h">
+    <div class="sec-h"><h2 id="vivo-h">Distribución en vivo</h2><div class="vivo-ts sub" id="vivo-ts"><span class="dotv"></span><span id="vivo-tst">Buscando datos…</span><button type="button" class="btn sec" id="vivo-con" hidden>Conectar con la PC</button></div></div>
+    <div class="kv" id="vivo-kv"></div>
+    <div class="vivo-g">
+      <div style="display:grid;gap:10px;min-width:0">
+        <div class="mapa" id="mapa" role="region" aria-label="Mapa de unidades"></div>
+        <p class="sub" id="mapa-nota" hidden></p>
+        <div class="tw"><table class="vivo"><thead><tr><th>Cisterna</th><th>Estado</th><th>Chofer</th><th>Vel.</th><th>Reporte</th><th>Dónde</th></tr></thead><tbody id="vivo-t"><tr><td colspan="6" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
+      </div>
+      <div class="panel-lat">
+        <div class="caja"><h3>Novedades de hoy</h3><ul class="nov" id="nov"><li class="vacio">Sin novedades todavía.</li></ul></div>
+        <div class="caja"><h3>Tareas de la PC</h3><p class="sub" id="tar-ts"></p><ul class="tar" id="tar"><li class="vacio">Sin datos de la PC todavía.</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="ob-h">
+    <div class="sec-h">
+      <h2 id="ob-h">Mis obligaciones</h2>
+      <div class="mesnav"><button type="button" id="mprev" aria-label="Mes anterior">‹</button><span id="mlabel"></span><button type="button" id="mnext" aria-label="Mes siguiente">›</button></div>
+    </div>
+    <div class="resumen-ob" id="ob-res"></div>
+    <div class="obs" id="obs"><p class="vacio">Cargando obligaciones…</p></div>
+  </section>
+
+  <section class="hoy" aria-labelledby="hoy-h">
+    <h2 id="hoy-h">Hacé esto hoy</h2>
+    <ol id="foco"><li class="vacio">Cargando tareas…</li></ol>
+    <p class="nota" id="nota"></p>
+  </section>
+
+  <section aria-labelledby="salud-h">
+    <div class="sec-h"><h2 id="salud-h">Bots y automatizaciones</h2><span class="sub">Chequeo cada hora, 08:37 a 15:37, lunes a sábado</span></div>
+    <p class="sub" id="salud-ts"></p>
+    <ul class="salud" id="salud"><li class="vacio">Sin chequeo todavía.</li></ul>
+  </section>
+
+  <section aria-labelledby="flota-h">
+    <h2 id="flota-h">Flota ahora</h2>
+    <p class="sub" id="flota-ts"></p>
+    <div class="kpis" id="kpis"></div>
+    <div class="tw"><table class="flota"><thead><tr><th>Cisterna</th><th>Tractor</th><th>Chofer</th><th>Vel.</th><th>Último reporte</th></tr></thead><tbody id="flota"><tr><td colspan="5" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
+  </section>
+
+  <section>
+    <details class="areas-box" id="areas-box">
+      <summary><h2>Áreas e ideas</h2><span class="sub" id="areas-n"></span></summary>
+      <div style="display:grid;gap:12px">
+        <div class="leyenda"><span>Tocá el cuadrado para avanzar: pendiente → en curso → hecha</span><span>▲ prioridad alta</span></div>
+        <div class="areas" id="areas"><p class="vacio">Cargando áreas…</p></div>
+        <form class="add" id="add">
+          <input id="nt" placeholder="Nueva tarea" required>
+          <select id="na" aria-label="Área"></select>
+          <select id="np" aria-label="Prioridad"><option value="1">Alta</option><option value="2" selected>Media</option><option value="3">Baja</option></select>
+          <button class="btn" type="submit">Agregar</button>
+        </form>
+      </div>
+    </details>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const hoyISO=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const mesDe=d=>d.getFullYear()+"-"+pad(d.getMonth()+1);
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const fmtFecha=iso=>{if(!iso)return"";const [y,m,d]=iso.slice(0,10).split("-");return d+"/"+m};
+const INICIO_INCENTIVOS="2026-11-01";
+const META_AUD=[4,5];
+
+$("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],audSug={},mesDoc=null,db=null;
+let mesSel=mesDe(new Date()),unsubMes=null;
+const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
+
+/* "DD/MM/AAAA HH:MM" -> Date */
+function parseAR(s){const m=/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/.exec(s||"");return m?new Date(+m[3],m[2]-1,+m[1],+m[4],+m[5]):null}
+/* ¿Debería haber un chequeo más nuevo? Horario 08:37–15:37 lun–sáb */
+function horasViejo(d){
+  if(!d)return null;
+  const h=(Date.now()-d)/36e5;
+  const now=new Date(),dia=now.getDay(),min=now.getHours()*60+now.getMinutes();
+  const enHorario=dia>=1&&dia<=6&&min>=8*60+37&&min<=16*60;
+  if(enHorario)return h>1.5?h:null;
+  return h>20?h:null;
+}
+const hs=h=>h==null?"—":h<0.5?"ahora":h<48?Math.round(h)+" h":Math.round(h/24)+" d";
+
+/* ---------- Obligaciones ---------- */
+function mesLabel(k){const [y,m]=k.split("-");return MESES[m-1]+" "+y}
+function diaDelMes(k){const n=new Date();return mesDe(n)===k?n.getDate():(k<mesDe(n)?31:0)}
+const M=()=>mesDoc||{};
+const st=(c,t)=>({c,t});
+
+function estadoAud(){
+  const a=M().auditorias||[],n=a.length,d=diaDelMes(mesSel);
+  if(n>=META_AUD[0])return st("ok","Meta cumplida");
+  if(d>=22)return st("bad","Atrasada");
+  return st("pend","En curso");
+}
+const noRequiere=e=>e.requiere===false;
+function excesosPend(){return excesos.filter(e=>!noRequiere(e)&&!(e.comentario||"").trim())}
+function estadoExc(){
+  const p=excesosPend(),h=hoyISO();
+  if(!p.length)return st("ok","Al día");
+  if(p.some(e=>(e.fecha||"")<h))return st("bad","Atrasado");
+  return st("pend","Falta comentar");
+}
+function estadoInc(){
+  const sinAv=faltas.filter(f=>!f.avisado).length;
+  if(hoyISO()<INICIO_INCENTIVOS&&!faltas.length)return st("info","Arranca el 1/11");
+  if(sinAv)return st("pend",sinAv+" sin avisar");
+  return st("ok","Todos avisados");
+}
+function estadoHR(k){
+  const o=M()[k]||{},c=+o.cargadas||0,t=+o.total||0;
+  if(!t)return st("pend","Sin datos");
+  if(c>=t)return st("ok","Al día");
+  return st(diaDelMes(mesSel)>=28?"bad":"pend","Faltan "+(t-c));
+}
+function estadoSV(){return M().seguridad?.respondido?st("ok","Respondido"):st("pend","Sin responder")}
+const PASOS_FAC=[["coincide","Lo que pasó Air Liquide coincide con lo nuestro"],["excel","Excel actualizado con la macro"],["enviado","Enviado al sector de facturación"]];
+function estadoFac(){const f=M().facturacion||{},n=PASOS_FAC.filter(p=>f[p[0]]).length;return n===3?st("ok","Listo"):st("pend",n+" de 3 pasos")}
+
+function card(id,titulo,s,body){return `<article class="ob st-${s.c}" id="ob-${id}"><div class="ob-h"><h3>${titulo}</h3><span class="chip s-${s.c}">${esc(s.t)}</span></div>${body}</article>`}
+
+function renderOb(){
+  $("mlabel").textContent=mesLabel(mesSel);
+  $("mnext").disabled=mesSel>=mesDe(new Date());
+  const cis=(flota.unidades||[]).map(u=>u.cis).sort();
+  const choferes=[...new Set((flota.unidades||[]).map(u=>u.chofer).filter(Boolean).concat(faltas.map(f=>f.chofer)))].sort();
+  const out=[];
+
+  // 1. Auditorías
+  const aud=M().auditorias||[],sA=estadoAud();
+  out.push(["aud",sA,card("aud","Auditorías de unidades",sA,`
+    <div class="ob-k">${aud.length}<small>de ${META_AUD[0]} a ${META_AUD[1]} en el mes</small></div>
+    <div class="bar"><i style="width:${Math.min(100,aud.length/META_AUD[1]*100)}%"></i></div>
+    ${(()=>{const sg=audSug.sugeridas||[];if(!sg.length)return '<p class="sub">Cuando corra el chequeo de las 08:37 vas a ver acá las unidades vencidas que están en el transporte.</p>';
+      const hecha=u=>aud.some(a=>a.cis===u.cis||(u.tractor&&a.tractor===u.tractor));
+      const fila=u=>`<li class="${hecha(u)?"hecha":""}"><span><b>${esc(u.cis||"")}</b> · ${esc(u.tractor||"")} · ${u.ultima?esc(u.dias)+" días":"sin auditoría"}${u.en_base?' · <span class="base">En el transporte</span>':(u.dist_km!=null?` · <span class="sub">a ${Math.round(u.dist_km)} km</span>`:"")}</span>${hecha(u)?'<span class="sub">Auditada ✓</span>':`<button type="button" data-aud-sug="${esc(u.tractor||u.cis)}">Auditada hoy</button>`}</li>`;
+      const base=sg.filter(u=>u.en_base&&!hecha(u)),resto=sg.filter(u=>!(u.en_base&&!hecha(u)));
+      return `<p class="sub">En el transporte ahora${audSug.generado?" · "+esc(audSug.generado):""}</p>${base.length?`<ul class="sug">${base.map(fila).join("")}</ul>`:(audSug.ubicacion?'<p class="sub">Ninguna unidad vencida está en el transporte.</p>':'<p class="sub">Ubicación pendiente: la revisa el chequeo de las 08:37.</p>')}
+      <details class="mas"><summary>Vencidas (más de 2 meses): ${sg.length}</summary><ul class="sug">${resto.map(fila).join("")}</ul></details>`})()}
+    ${aud.length?`<ul class="tags">${aud.map((a,i)=>`<li>${esc(a.cis||a.tractor)}${a.tractor&&a.cis?` <span class="sub">${esc(a.tractor)}</span>`:""} <span class="sub">${esc(fmtFecha(a.fecha))}</span><button type="button" data-aud-del="${i}" aria-label="Quitar ${esc(a.cis)}">×</button></li>`).join("")}</ul>`:'<p class="sub">Ninguna auditada este mes.</p>'}
+    <div class="row"><select id="aud-cis" aria-label="Cisterna auditada">${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select><input type="date" id="aud-f" value="${hoyISO()}" aria-label="Fecha de auditoría"><button class="btn" type="button" id="aud-add">Registrar</button></div>`)]);
+
+  // 2. Excesos
+  const pend=excesosPend(),sE=estadoExc(),h=hoyISO();
+  const desest=excesos.filter(e=>noRequiere(e)&&!(e.comentario||"").trim()).sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  const visibles=excesos.filter(e=>!noRequiere(e)&&(!(e.comentario||"").trim()||e.fecha===h)).sort((a,b)=>(!!(a.comentario||"").trim())-(!!(b.comentario||"").trim())||(a.fecha||"").localeCompare(b.fecha||""));
+  out.push(["exc",sE,card("exc","Excesos: comentario de cada uno",sE,`
+    <div class="ob-k">${pend.length}<small>sin comentario · ${excesos.filter(e=>e.fecha===h).length} hoy</small></div>
+    ${visibles.length?`<ul class="lista">${visibles.map(e=>{const ok=!!(e.comentario||"").trim();return `<li class="ex ${ok?"hecho":""}">
+      <span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}${e.detalle?` <span class="sub">(${esc(e.detalle)})</span>`:""}</span>
+      ${ok?`<span class="com">“${esc(e.comentario)}”${e.resultado==="falta"?'<span class="res s-bad">Falta</span>':e.resultado==="justificado"?'<span class="res s-ok">Justificado</span>':""}</span>`:`<div class="row"><input id="com-${esc(e.id)}" placeholder="Qué dijo el chofer / motivo" aria-label="Comentario"></div><div class="row"><button class="btn sec" type="button" data-com="${esc(e.id)}" data-res="justificado">Justificado</button><button class="btn" type="button" data-com="${esc(e.id)}" data-res="falta">Cuenta como falta</button></div>`}
+    </li>`}).join("")}</ul>`:'<p class="sub">No hay excesos pendientes.</p>'}
+    ${desest.length?`<details class="mas"><summary>No requieren justificación: ${desest.length}</summary><ul class="lista">${desest.map(e=>`<li class="ex hecho"><span class="exh"><b>${esc(fmtFecha(e.fecha))}</b> · ${esc(e.chofer||"Sin chofer")}${e.cis?` · ${esc(e.cis)}`:""} · ${esc(e.tipo||"")}</span><span class="com">${esc(e.motivo||"")}</span></li>`).join("")}</ul></details>`:""}
+    <details class="mas"><summary>Cargar un exceso a mano</summary><div class="formx">
+      <div class="row"><input type="date" id="ex-f" value="${h}" aria-label="Fecha"><input id="ex-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"><select id="ex-cis" aria-label="Cisterna"><option value="">Cisterna</option>${cis.map(c=>`<option>${esc(c)}</option>`).join("")}</select></div>
+      <div class="row"><select id="ex-t" aria-label="Tipo"><option>Jornada</option><option>Manejo continuo</option><option>Velocidad</option><option>Otro</option></select><input id="ex-d" placeholder="Detalle (ej. 5:21 h continuas)" aria-label="Detalle"><button class="btn" type="button" id="ex-add">Agregar</button></div>
+    </div></details>`)]);
+
+  // 3. Incentivos
+  const sI=estadoInc(),porCh={};
+  faltas.forEach(f=>{(porCh[f.chofer||"Sin chofer"]??=[]).push(f)});
+  const chs=Object.keys(porCh).sort((a,b)=>porCh[b].filter(f=>!f.avisado).length-porCh[a].filter(f=>!f.avisado).length||a.localeCompare(b));
+  out.push(["inc",sI,card("inc","Incentivos: faltas avisadas",sI,`
+    <p class="sub">${hoyISO()<INICIO_INCENTIVOS?"El programa se aplica desde el 1 de noviembre.":"Programa en vigencia."} Cada chofer tiene que saber cada falta que tiene.</p>
+    <div class="ob-k">${faltas.filter(f=>!f.avisado).length}<small>faltas sin avisar · ${chs.length} choferes con faltas</small></div>
+    ${chs.length?`<div class="lista" style="display:grid;gap:10px">${chs.map(c=>`<div class="cho"><div class="cho-h"><span>${esc(c)}</span><span class="sub">${porCh[c].length} falta${porCh[c].length>1?"s":""}</span></div>${porCh[c].sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||"")).map(f=>`<div class="falta ${f.avisado?"ok":""}"><span>${esc(fmtFecha(f.fecha))} · ${esc(f.falta)}</span><button type="button" data-av="${esc(f.id)}">${f.avisado?"Avisado ✓":"Marcar avisado"}</button></div>`).join("")}</div>`).join("")}</div>`:'<p class="sub">Sin faltas cargadas.</p>'}
+    <details class="mas"><summary>Cargar una falta</summary><div class="formx">
+      <div class="row"><input type="date" id="fa-f" value="${h}" aria-label="Fecha"><input id="fa-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"></div>
+      <div class="row"><input id="fa-d" placeholder="Falta (ej. exceso de velocidad)" aria-label="Falta"><button class="btn" type="button" id="fa-add">Agregar</button></div>
+    </div></details>`)]);
+
+  // 4 y 5. HR
+  const hrCard=(k,titulo,nota)=>{const o=M()[k]||{},c=+o.cargadas||0,t=+o.total||0,s=estadoHR(k);
+    return [k,s,card(k,titulo,s,`
+      <div class="ob-k">${c}<small>de ${t||"?"} hojas de ruta del mes</small></div>
+      <div class="bar"><i style="width:${t?Math.min(100,c/t*100):0}%"></i></div>
+      <p class="sub">${nota}</p>
+      <div class="row"><input type="number" min="0" id="${k}-c" value="${c||""}" placeholder="Cargadas" aria-label="Cargadas"><input type="number" min="0" id="${k}-t" value="${t||""}" placeholder="Total" aria-label="Total del mes"><button class="btn" type="button" data-hr="${k}">Guardar</button></div>`)]};
+  out.push(hrCard("hr_m3","HR: m3/kg en ControlPesos","App en P:\\Archivos compartidos Transtotal\\NICO\\ControlPesos."));
+  out.push(hrCard("hr_transoft","HR cargadas en Transoft","Carga de cada hoja de ruta en Transoft escritorio."));
+
+  // 6. Seguridad vial
+  const sv=M().seguridad||{},sS=estadoSV();
+  out.push(["sv",sS,card("sv","Reporte seguridad vial Air Liquide",sS,`
+    <p class="sub">No tiene vencimiento, pero hay que contestarlo todos los meses.</p>
+    ${sv.respondido?`<p>Respondido el ${esc(fmtFecha(sv.fecha))}.</p><div class="row"><button class="btn sec" type="button" id="sv-undo">Desmarcar</button></div>`:`<div class="row"><button class="btn" type="button" id="sv-ok">Marcar respondido</button></div>`}`)]);
+
+  // 7. Facturación
+  const fac=M().facturacion||{},sF=estadoFac();
+  out.push(["fac",sF,card("fac","Control facturación Air Liquide",sF,`
+    <ul class="pasos">${PASOS_FAC.map(([k,t])=>`<li><label><input type="checkbox" data-fac="${k}" ${fac[k]?"checked":""}> <span>${t}${fac[k+"_fecha"]?` <span class="sub">· ${esc(fmtFecha(fac[k+"_fecha"]))}</span>`:""}</span></label></li>`).join("")}</ul>`)]);
+
+  $("obs").innerHTML=out.map(o=>o[2]).join("")+`<datalist id="dl-ch">${choferes.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>`;
+  const cnt={ok:0,pend:0,bad:0,info:0};out.forEach(o=>cnt[o[1].c]++);
+  $("ob-res").innerHTML=[["ok","al día"],["pend","pendientes"],["bad","atrasadas"]].filter(([k])=>cnt[k]).map(([k,t])=>`<span class="chip s-${k}">${cnt[k]} ${t}</span>`).join("");
+}
+
+async function guardarMes(patch){
+  if(!db)return;
+  const ref=db.doc("mes/"+mesSel);
+  try{
+    if(mesDoc)await ref.update(patch);
+    else await ref.set({auditorias:[],hr_m3:{cargadas:0,total:0},hr_transoft:{cargadas:0,total:0},seguridad:{respondido:false},facturacion:{},...patch});
+  }catch(e){console.warn(e)}
+}
+
+function subMes(){
+  if(unsubMes)unsubMes();mesDoc=null;renderOb();
+  if(!db)return;
+  unsubMes=db.doc("mes/"+mesSel).onSnapshot(s=>{mesDoc=s.exists?s.data():null;renderOb()},e=>console.warn(e));
+}
+$("mprev").addEventListener("click",()=>{const [y,m]=mesSel.split("-").map(Number);mesSel=mesDe(new Date(y,m-2,1));subMes()});
+$("mnext").addEventListener("click",()=>{const [y,m]=mesSel.split("-").map(Number);mesSel=mesDe(new Date(y,m,1));subMes()});
+
+$("obs").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b||!db)return;
+  if(b.id==="aud-add"){const cis=$("aud-cis").value,f=$("aud-f").value||hoyISO();if(!cis)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis,fecha:f}]});return}
+  if(b.dataset.audDel!=null){const a=[...(M().auditorias||[])];a.splice(+b.dataset.audDel,1);await guardarMes({auditorias:a});return}
+  if(b.dataset.com){const id=b.dataset.com,inp=$("com-"+id),v=inp.value.trim();if(!v){inp.focus();inp.placeholder="Escribí el comentario primero";return}
+    const ex=excesos.find(x=>x.id===id);if(!ex)return;const res=b.dataset.res;b.disabled=true;
+    try{
+      const patch={comentario:v,resultado:res,comentado:new Date().toISOString()};
+      if(res==="falta"){const r=await db.collection("faltas").add({fecha:ex.fecha||hoyISO(),chofer:ex.chofer||"Sin chofer",falta:[ex.tipo,ex.detalle].filter(Boolean).join(": "),avisado:false,exceso_id:id});patch.falta_id=r.id}
+      await db.doc("excesos/"+id).update(patch);
+    }catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.audSug){const k=b.dataset.audSug,u=(audSug.sugeridas||[]).find(x=>(x.tractor||x.cis)===k);if(!u)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis:u.cis||"",tractor:u.tractor||"",fecha:hoyISO()}]});return}
+  if(b.id==="ex-add"){const d={fecha:$("ex-f").value||hoyISO(),chofer:$("ex-ch").value.trim(),cis:$("ex-cis").value,tipo:$("ex-t").value,detalle:$("ex-d").value.trim(),comentario:"",origen:"manual"};if(!d.chofer&&!d.cis)return;b.disabled=true;try{await db.collection("excesos").add(d)}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.av){const f=faltas.find(x=>x.id===b.dataset.av);if(!f)return;b.disabled=true;try{await db.doc("faltas/"+f.id).update({avisado:!f.avisado,avisado_fecha:f.avisado?"":hoyISO()})}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.id==="fa-add"){const d={fecha:$("fa-f").value||hoyISO(),chofer:$("fa-ch").value.trim(),falta:$("fa-d").value.trim(),avisado:false};if(!d.chofer||!d.falta)return;b.disabled=true;try{await db.collection("faltas").add(d)}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.hr){const k=b.dataset.hr;b.disabled=true;await guardarMes({[k]:{cargadas:+$(k+"-c").value||0,total:+$(k+"-t").value||0}});b.disabled=false;return}
+  if(b.id==="sv-ok"){b.disabled=true;await guardarMes({seguridad:{respondido:true,fecha:hoyISO()}});return}
+  if(b.id==="sv-undo"){b.disabled=true;await guardarMes({seguridad:{respondido:false,fecha:""}});return}
+});
+$("obs").addEventListener("change",async e=>{
+  const c=e.target.closest("input[data-fac]");if(!c||!db)return;
+  const k=c.dataset.fac;c.disabled=true;
+  await guardarMes({facturacion:{[k]:c.checked,[k+"_fecha"]:c.checked?hoyISO():""}});
+});
+$("obs").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;const i=e.target.closest("input[id^='com-']");if(!i)return;
+  e.preventDefault();
+});
+
+/* ---------- Resto del tablero ---------- */
+function render(){
+  const abiertas=tareas.filter(t=>t.estado!=="hecha");
+  let foco=(meta.foco||[]).map(id=>tareas.find(t=>t.id===id)).filter(t=>t&&t.estado!=="hecha");
+  if(!foco.length) foco=[...abiertas].sort((a,b)=>(a.prioridad||2)-(b.prioridad||2)||(a.orden||0)-(b.orden||0)).slice(0,3);
+  const an=id=>(areas.find(a=>a.id===id)||{}).nombre||"";
+  $("foco").innerHTML=foco.length?foco.map(t=>`<li><b>${esc(t.titulo)}</b> <span class="sub">· ${esc(an(t.area))}</span>${t.siguiente?`<span class="sig">Paso: ${esc(t.siguiente)}</span>`:""}</li>`).join(""):'<li class="vacio">No hay tareas abiertas.</li>';
+  $("nota").textContent=meta.nota||"";
+
+  const tarea=t=>`<li class="t ${esc(t.estado)} p${t.prioridad||2}"><button class="chk" data-id="${esc(t.id)}" aria-label="Cambiar estado: ${esc(t.estado)}">${t.estado==="hecha"?"✓":""}</button><span class="tt">${esc(t.titulo)}${t.actualizada?`<span class="fe">${esc(fmtFecha(t.actualizada))}</span>`:""}${t.siguiente&&t.estado!=="hecha"?`<span class="sig">${esc(t.siguiente)}</span>`:""}</span></li>`;
+  $("areas").innerHTML=areas.length?[...areas].sort((a,b)=>(a.orden||0)-(b.orden||0)).map(a=>{
+    const ts=tareas.filter(t=>t.area===a.id).sort((x,y)=>(x.prioridad||2)-(y.prioridad||2));
+    const ab=ts.filter(t=>t.estado!=="hecha"),he=ts.filter(t=>t.estado==="hecha");
+    return `<article class="area"><div class="area-h"><h3>${esc(a.nombre)}</h3><span class="estado e-${esc(a.estado)}">${ab.length} abierta${ab.length===1?"":"s"}</span></div>
+    ${a.resumen?`<p class="resumen">${esc(a.resumen)}</p>`:""}
+    <ul class="tareas">${ab.map(tarea).join("")||'<li class="vacio">Sin tareas abiertas.</li>'}</ul>
+    ${he.length?`<details class="hechas"><summary>Ver hechas (${he.length})</summary><ul class="tareas">${he.map(tarea).join("")}</ul></details>`:""}</article>`}).join(""):'<p class="vacio">Todavía no hay áreas cargadas.</p>';
+  $("areas-n").textContent=abiertas.length?abiertas.length+" tareas abiertas":"";
+  $("na").innerHTML=areas.map(a=>`<option value="${esc(a.id)}">${esc(a.nombre)}</option>`).join("");
+
+  // Salud
+  const sl=(salud.items||[]),dS=parseAR(salud.chequeado),vS=horasViejo(dS);
+  $("salud-ts").innerHTML=salud.chequeado?(vS?`<p class="viejo">Último chequeo: ${esc(salud.chequeado)}, hace ${hs(vS)}. Puede que la tarea de la PC no esté corriendo.</p>`:"Último chequeo: "+esc(salud.chequeado)):"";
+  $("salud").innerHTML=sl.length?sl.map(s=>`<li class="${esc(s.estado)}"><span class="sn"><span class="dot"></span>${esc(s.nombre)}</span><span class="sd">${esc(s.detalle)}</span></li>`).join(""):'<li class="vacio">Sin chequeo todavía.</li>';
+
+  // Flota
+  const fl=(flota.unidades||[]),dF=parseAR(flota.generado),extra=dF?Math.max(0,(Date.now()-dF)/36e5):0,vF=horasViejo(dF);
+  $("flota-ts").innerHTML=flota.generado?(vF?`<p class="viejo">Datos del ${esc(flota.generado)} (hace ${hs(vF)}). Las velocidades no son de ahora.</p>`:"Transdat + SMP · "+esc(flota.generado)):"";
+  if(fl.length){
+    const real=u=>u.hs==null?null:u.hs+extra;
+    const rep=fl.filter(u=>u.hs<=24),sin=fl.filter(u=>!(u.hs<=24));
+    const mov=rep.filter(u=>u.vel>5).length,sinCh=rep.filter(u=>!u.chofer).length;
+    $("kpis").innerHTML=`<span><b>${fl.length}</b>unidades</span><span><b>${mov}</b>en movimiento</span><span><b>${rep.length-mov}</b>detenidas</span><span><b>${sin.length}</b>sin reportar</span>${sinCh?`<span class="s-bad"><b>${sinCh}</b>sin chofer logueado</span>`:""}`;
+    const fila=u=>{const cls=u.alerta?"alerta":(u.hs>24?"off":(u.vel>5&&!vF?"mov":""));return `<tr class="${cls}"><td class="cis">${esc(u.cis)}</td><td>${esc(u.tractor||"—")}</td><td>${u.chofer?esc(u.chofer):(u.hs>24?"—":'<span class="sinch">Sin chofer (iButton)</span>')}${u.alerta?` <span class="sub">· ${esc(u.alerta)}</span>`:""}</td><td class="v">${u.vel} km/h</td><td>${hs(real(u))}</td></tr>`};
+    $("flota").innerHTML=rep.map(fila).join("")+(sin.length?`<tr class="sep"><td colspan="5">Sin reportar hace más de un día</td></tr>`+sin.map(fila).join(""):"");
+  }
+}
+render();renderOb();
+
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button.chk");if(!b||!db)return;
+  const t=tareas.find(x=>x.id===b.dataset.id);if(!t)return;
+  b.disabled=true;
+  try{await db.doc("tareas/"+t.id).update({estado:NEXT[t.estado]||"en_curso",actualizada:new Date().toISOString()})}catch(err){console.warn(err)}
+  b.disabled=false;
+});
+$("add").addEventListener("submit",async e=>{
+  e.preventDefault();if(!db)return;
+  const titulo=$("nt").value.trim();if(!titulo)return;
+  try{await db.collection("tareas").add({titulo,area:$("na").value,prioridad:+$("np").value,estado:"pendiente",orden:99,actualizada:new Date().toISOString()});$("nt").value=""}catch(err){console.warn(err)}
+});
+/* ---------- Distribución en vivo ----------
+   En la app de Claude de la PC NDIFABIO habla con el puente local (host:transtotal): posiciones cada 2 min
+   y botones de tareas. Guarda la última foto en meta/vivo_* para verla desde cualquier lado. */
+const HOST="host:transtotal";
+const EST={en_viaje:"En viaje",detenida:"Detenida",en_base:"En la base",sin_senal:"Sin señal"};
+const CIUDADES=[["Rosario",-32.9468,-60.6393],["San Lorenzo",-32.7453,-60.736],["Santa Fe",-31.6333,-60.7],["Paraná",-31.7333,-60.5297],["Rafaela",-31.2503,-61.4867],["Villa Constitución",-33.2322,-60.3296],["San Nicolás",-33.3342,-60.2108],["Pergamino",-33.8895,-60.5736],["Campana",-34.1633,-58.9592],["Zárate",-34.0981,-59.0286],["Buenos Aires",-34.6037,-58.3816],["Casilda",-33.0442,-61.1681],["Cañada de Gómez",-32.8167,-61.3833],["Venado Tuerto",-33.7456,-61.9688],["Marcos Juárez",-32.6977,-62.1053],["Villa María",-32.4075,-63.2403],["Córdoba",-31.4201,-64.1888]];
+let vivo={flota:null,bots:null,nov:null,live:false,err:""},filtroEst="",mapa=null,capaU=null,capaFondo=null,fondoVivo=false,encuadrado=false,selCis="",mcp=null;
+const hhmm=iso=>{if(!iso)return"";const d=new Date(iso);return isNaN(d)?String(iso).slice(11,16):pad(d.getHours())+":"+pad(d.getMinutes())};
+const edad=m=>m==null?"—":m<2?"ahora":m<60?m+" min":m<48*60?Math.round(m/60)+" h":Math.round(m/1440)+" d";
+
+function iniciarMapa(){
+  if(mapa||typeof L==="undefined")return;
+  mapa=L.map("mapa",{zoomControl:true,attributionControl:true}).setView([-33.1,-60.6],8);
+  // El visor no deja bajar imágenes de OpenStreetMap: en la PC las trae el puente (mapa_tile).
+  let fallas=0;
+  const Fondo=L.GridLayer.extend({createTile(c,done){
+    const img=document.createElement("img");img.alt="";img.setAttribute("role","presentation");
+    if(mcp&&vivo.live){mcp.callTool(HOST,"mapa_tile",{z:c.z,x:c.x,y:c.y},{cache:{staleTime:864e5,gcTime:864e5}}).then(r=>{img.src=r.payload?.data||"";done(null,img)},e=>done(e,img))}
+    else{img.onload=()=>done(null,img);img.onerror=e=>done(e,img);img.src=`https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`}
+    return img}});
+  capaFondo=new Fondo({minZoom:3,maxZoom:17,attribution:"© OpenStreetMap"})
+    .on("tileerror",()=>{if(++fallas===4&&!vivo.live){const n=$("mapa-nota");n.hidden=false;n.textContent="El mapa de fondo se ve solo en la app de Claude de la PC; las posiciones y la columna Dónde son correctas."}}).addTo(mapa);
+  fondoVivo=vivo.live;
+  CIUDADES.forEach(([n,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:"",html:`<span class="ciudad">${esc(n)}</span>`,iconSize:[0,0]})}).addTo(mapa));
+  capaU=L.layerGroup().addTo(mapa);
+}
+
+function dibujarMapa(f){
+  iniciarMapa();if(!mapa)return;
+  capaU.clearLayers();
+  const B=f.base||{lat:-32.8639,lng:-60.7676,radio_km:1};
+  L.circle([B.lat,B.lng],{radius:(B.radio_km||1)*1000,color:"#2b62a8",weight:1,fillOpacity:.12}).bindTooltip("Base Transtotal").addTo(capaU);
+  const us=(f.unidades||[]).filter(u=>u.lat!=null&&(!filtroEst||u.estado===filtroEst));
+  us.forEach(u=>{
+    const m=L.marker([u.lat,u.lng],{title:u.cis,icon:L.divIcon({className:"",html:`<span class="pin est-${esc(u.estado)}${u.cis===selCis?" sel":""}">${esc(u.cis)}</span>`,iconSize:[0,0]})});
+    m.bindPopup(`<b>${esc(u.cis)}</b> · ${esc(u.tractor)}<br>${esc(EST[u.estado]||u.estado)} · ${u.vel} km/h${u.encendido?" · motor encendido":""}<br>Chofer: ${esc(u.chofer||"sin iButton")}<br>${esc(u.dir||"")}<br><span class="sub">Reporte ${esc(hhmm(u.fecha))} (${esc(edad(u.edad_min))})${u.dist_base_km!=null?" · a "+esc(u.dist_base_km)+" km de la base":""}</span>`);
+    m.on("click",()=>{selCis=u.cis});
+    m.addTo(capaU);
+    if(u.cis===selCis)setTimeout(()=>m.openPopup(),0);
+  });
+  if(!encuadrado&&us.length){mapa.fitBounds(L.latLngBounds(us.map(u=>[u.lat,u.lng]).concat([[B.lat,B.lng]])).pad(.15));encuadrado=true}
+}
+
+function renderVivo(){
+  const f=vivo.flota;
+  const ts=$("vivo-ts"),tst=$("vivo-tst");
+  ts.classList.toggle("live",vivo.live);
+  if(f)tst.textContent=(vivo.live?"En vivo desde la PC · ":"Última foto · ")+new Date(f.generado).toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+(vivo.live?"":" · en vivo solo desde la app de Claude de la PC");
+  else tst.textContent=vivo.err?("No se pudo conectar con la PC: "+vivo.err):mcp?"Conectando con la PC…":"Sin datos todavía. Abrí el tablero en la app de Claude de la PC NDIFABIO.";
+  $("vivo-con").hidden=!mcp||vivo.live;
+  const us=f?.unidades||[];
+  // Si hay datos en vivo de menos de 1 h, la tabla vieja "Flota ahora" sobra.
+  const fresco=f&&Date.now()-new Date(f.generado)<36e5;
+  $("flota-h").closest("section").hidden=!!fresco;
+  const cnt={};us.forEach(u=>cnt[u.estado]=(cnt[u.estado]||0)+1);
+  $("vivo-kv").innerHTML=us.length?`<button type="button" data-est="" aria-pressed="${!filtroEst}"><b>${us.length}</b>todas</button>`+Object.keys(EST).map(k=>`<button type="button" class="est-${k}" data-est="${k}" aria-pressed="${filtroEst===k}"><b>${cnt[k]||0}</b>${EST[k]}</button>`).join(""):"";
+  const vis=us.filter(u=>!filtroEst||u.estado===filtroEst);
+  const orden={en_viaje:0,detenida:1,en_base:2,sin_senal:3};
+  $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
+  if(f)dibujarMapa(f);
+  if(capaFondo&&vivo.live&&!fondoVivo){fondoVivo=true;$("mapa-nota").hidden=true;capaFondo.redraw()}
+
+  // Novedades: HR del puente + excesos de hoy de la base + bots con problemas
+  const h=hoyISO(),items=[];
+  (vivo.nov?.items||[]).forEach(n=>items.push({h:n.hora,c:"t-hr",t:n.texto+(n.procesado?"":" · sin procesar")}));
+  excesos.filter(e=>e.fecha===h).forEach(e=>items.push({h:e.fecha,c:"t-exc",t:`Exceso: ${e.chofer||"Sin chofer"}${e.cis?" · "+e.cis:""} · ${e.tipo||""}${e.detalle?" ("+e.detalle+")":""}`}));
+  (vivo.bots?.items||[]).filter(b=>b.estado!=="ok").forEach(b=>items.push({h:b.ultima,c:"t-bot_"+b.estado,t:b.nombre+": "+b.detalle}));
+  items.sort((a,b)=>String(b.h||"").localeCompare(String(a.h||"")));
+  $("nov").innerHTML=items.length?items.map(n=>`<li class="${n.c}"><span class="h">${esc(/T\d\d:/.test(n.h||"")?hhmm(n.h):"hoy")}</span>${esc(n.t)}</li>`).join(""):'<li class="vacio">Sin novedades hoy.</li>';
+
+  // Tareas
+  const b=vivo.bots;
+  $("tar-ts").textContent=b?("Revisado "+hhmm(b.chequeado)+(vivo.live?"":" · los botones funcionan solo en la app de Claude de la PC")):"";
+  $("tar").innerHTML=b?.items?.length?b.items.map(t=>`<li class="${esc(t.estado)}"><span class="dot"></span><span>${esc(t.nombre)}<span class="d">${esc(t.detalle)}${t.ultima?" · última "+esc(hhmm(t.ultima)):""}${t.proxima?" · próxima "+esc(hhmm(t.proxima)):""}</span>${t.aviso?`<span class="d">${esc(t.aviso)}</span>`:""}<span class="res" id="res-${esc(t.id)}"></span></span>${t.ejecutar?`<button type="button" data-run="${esc(t.id)}" ${vivo.live&&!t.corriendo?"":"disabled"}>${t.corriendo?"Corriendo…":"Ejecutar ahora"}</button>`:"<span></span>"}</li>`).join(""):(vivo.err&&!vivo.live?'<li class="vacio">Necesita conexión con la PC (botón de arriba).</li>':'<li class="vacio">Sin datos de la PC todavía.</li>');
+}
+
+$("vivo-kv").addEventListener("click",e=>{const b=e.target.closest("button[data-est]");if(!b)return;filtroEst=b.dataset.est;renderVivo()});
+$("vivo-t").addEventListener("click",e=>{const r=e.target.closest("tr[data-cis]");if(!r||!mapa)return;selCis=r.dataset.cis;const u=(vivo.flota?.unidades||[]).find(x=>x.cis===selCis);if(u?.lat!=null)mapa.setView([u.lat,u.lng],Math.max(mapa.getZoom(),11));renderVivo();$("mapa").scrollIntoView({behavior:"smooth",block:"center"})});
+$("tar").addEventListener("click",async e=>{
+  const b=e.target.closest("button[data-run]");if(!b||!mcp)return;
+  const t=(vivo.bots?.items||[]).find(x=>x.id===b.dataset.run);if(!t)return;
+  if(t.aviso&&!confirm(t.nombre+": "+t.aviso+" ¿Ejecutar igual?"))return;
+  b.disabled=true;const res=$("res-"+t.id);res.className="res";res.textContent="Lanzando…";
+  try{const r=await mcp.callTool(HOST,"ejecutar_tarea",{id:t.id});const p=r.payload||{};res.textContent=p.detalle||"Lanzada";setTimeout(()=>mcp.invalidate(HOST,"estado_bots").catch(()=>{}),20000)}
+  catch(err){res.className="res err";res.textContent=err.code==="cancelled"?"Cancelada":"No se pudo: "+(err.message||err.code);b.disabled=false}
+});
+
+let ultGuardado={};
+function guardarFoto(k,data){
+  // Una escritura por cambio, como mucho cada 2 min por documento.
+  if(!db||!data)return;const ahora=Date.now();
+  if(ultGuardado[k]&&ahora-ultGuardado[k]<110000)return;ultGuardado[k]=ahora;
+  db.doc("meta/vivo_"+k).set(data).catch(e=>console.warn(e));
+}
+// Los watchTool no llegan a los servidores host: del visor, así que se lee con callTool y un intervalo propio.
+async function leerVivo(k,tool){
+  try{
+    const r=await mcp.callTool(HOST,tool,{},{cache:false});const p=r?.payload;if(!p)return;
+    vivo[k]=p;if(k==="flota"){vivo.live=true;vivo.err=""}renderVivo();guardarFoto(k,p);
+  }catch(e){console.warn(tool,e);if(k==="flota"){vivo.live=false;vivo.err=errTxt(e);renderVivo()}}
+}
+const errTxt=e=>{const c=e?.code||"";return ({approval_required:"falta tu permiso: tocá Conectar con la PC",not_in_manifest:"el permiso está rechazado: tocá Conectar con la PC",server_not_connected:"la app no encuentra el puente \"transtotal\" (server_not_connected)",not_granted:"falta dar permiso (not_granted)",cancelled:"se canceló el permiso (cancelled)",blocked_by_policy:"bloqueado por política (blocked_by_policy)"})[c]||((c||"error")+(e?.message?": "+e.message:""))};
+let timers=[];
+function arrancarVivo(){
+  timers.forEach(clearInterval);
+  const cada=(k,tool,ms)=>{leerVivo(k,tool);timers.push(setInterval(()=>{if(!document.hidden)leerVivo(k,tool)},ms))};
+  cada("flota","flota_ahora",120000);cada("bots","estado_bots",300000);cada("nov","novedades",300000);
+}
+$("vivo-con").addEventListener("click",async()=>{
+  const b=$("vivo-con");b.disabled=true;vivo.err="";$("vivo-tst").textContent="Pidiendo permiso…";
+  try{const pm=await claude.use("permissions");if(pm)await pm.request(["mcp:"+HOST])}catch(e){}
+  try{const r=await mcp.callTool(HOST,"flota_ahora",{},{cache:false});if(r?.payload){vivo.flota=r.payload;vivo.live=true;vivo.err="";guardarFoto("flota",r.payload)}arrancarVivo()}
+  catch(e){vivo.err=errTxt(e)}
+  b.disabled=false;renderVivo();
+});
+setInterval(renderVivo,60*1000);
+renderVivo();
+
+try{if(localStorage.getItem("areasAbiertas")==="1")$("areas-box").open=true}catch(e){}
+$("areas-box").addEventListener("toggle",()=>{try{localStorage.setItem("areasAbiertas",$("areas-box").open?"1":"0")}catch(e){}});
+setInterval(()=>{render()},5*60*1000);
+
+(async()=>{
+  claude.use("mcp").then(m=>{mcp=m;renderVivo();if(mcp)arrancarVivo()});
+  db=await claude.use("db");
+  if(!db){$("foco").innerHTML='<li class="vacio">No se pudo conectar con los datos del tablero.</li>';$("obs").innerHTML='<p class="vacio">No se pudo conectar con los datos del tablero.</p>';$("areas").innerHTML="";return}
+  const err=e=>console.warn(e);
+  db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
+  db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
+  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));renderOb();renderVivo()},err);
+  db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
+  db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
+  db.doc("meta/auditorias").onSnapshot(s=>{audSug=s.exists?s.data():{};renderOb()},err);
+  db.doc("meta/salud").onSnapshot(s=>{salud=s.exists?s.data():{};render()},err);
+  db.doc("meta/hoy").onSnapshot(s=>{meta=s.exists?s.data():{};render()},err);
+  ["flota","bots","nov"].forEach(k=>db.doc("meta/vivo_"+k).onSnapshot(s=>{if(vivo.live||!s.exists)return;vivo[k]=s.data();renderVivo()},err));
+  subMes();
+})();
+</script>

@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "diaria",
+ "fuente": "Fotos/PDF de HR en carpetas mensuales (P: y Drive)",
+ "nombre": "Carga de HR",
+ "orden": 3,
+ "resumen": "Por viaje. Extraer SEMI, Salida, Regreso (DD/MM/AA HH:MM); fallback 15:00. Archivo: HR [nro] [km] [pág].jpg, km = odómetro llegada − salida."
+}

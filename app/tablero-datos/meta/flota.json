@@ -1,0 +1,146 @@
+{
+ "generado": "21/10/2026 15:34",
+ "unidades": [
+  {
+   "chofer": "Vignatti Cristian",
+   "cis": "536",
+   "hs": 0,
+   "tractor": "AE 567 CR",
+   "vel": 23
+  },
+  {
+   "chofer": "Lopez Julio",
+   "cis": "538",
+   "hs": 0.2,
+   "tractor": "AG 072 ZV",
+   "vel": 0
+  },
+  {
+   "chofer": "Gonzalez Mauro",
+   "cis": "547",
+   "hs": 0.2,
+   "tractor": "AG 153 LC",
+   "vel": 0
+  },
+  {
+   "chofer": "Orellano Carlos",
+   "cis": "558",
+   "hs": 0,
+   "tractor": "AG 549 BR",
+   "vel": 0
+  },
+  {
+   "chofer": "Escobar Fernando",
+   "cis": "561",
+   "hs": 0,
+   "tractor": "AE 055 XV",
+   "vel": 68
+  },
+  {
+   "chofer": "Godoy Claudio",
+   "cis": "568",
+   "hs": 0,
+   "tractor": "AI 543 TY",
+   "vel": 75
+  },
+  {
+   "alerta": "en movimiento sin iButton",
+   "chofer": "",
+   "cis": "570",
+   "hs": 0,
+   "tractor": "AG 758 LX",
+   "vel": 77
+  },
+  {
+   "chofer": "Ricardini Fernando",
+   "cis": "571",
+   "hs": 0,
+   "tractor": "AD 068 KU",
+   "vel": 0
+  },
+  {
+   "chofer": "Lopez Hugo",
+   "cis": "573",
+   "hs": 0,
+   "tractor": "AH 961 KD",
+   "vel": 77
+  },
+  {
+   "chofer": "Tejeda Pedro",
+   "cis": "574",
+   "hs": 0,
+   "tractor": "AI 284 CS",
+   "vel": 75
+  },
+  {
+   "chofer": "Hernandez Hector",
+   "cis": "575",
+   "hs": 0,
+   "tractor": "AG 990 WL",
+   "vel": 28
+  },
+  {
+   "chofer": "Santandrea Hernan",
+   "cis": "671",
+   "hs": 0,
+   "tractor": "AF 378 NF",
+   "vel": 72
+  },
+  {
+   "chofer": "",
+   "cis": "672",
+   "hs": 0,
+   "tractor": "AC 646 NF",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "613",
+   "hs": 4.7,
+   "tractor": "AE 460 TD",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "555",
+   "hs": 94.6,
+   "tractor": "AH 560 UF",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "602",
+   "hs": 150.3,
+   "tractor": "",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "560",
+   "hs": 1705,
+   "tractor": "",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "578",
+   "hs": 4320,
+   "tractor": "",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "539",
+   "hs": 6363,
+   "tractor": "",
+   "vel": 0
+  },
+  {
+   "chofer": "",
+   "cis": "556",
+   "hs": 10227,
+   "tractor": "",
+   "vel": 0
+  }
+ ]
+}

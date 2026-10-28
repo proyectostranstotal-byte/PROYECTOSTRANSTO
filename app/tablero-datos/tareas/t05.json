@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 5,
+ "prioridad": 2,
+ "siguiente": "Tabla fija cisterna → patente → tractor como fuente única.",
+ "titulo": "Planilla diaria de distribución autocompletada"
+}

@@ -1,0 +1,8 @@
+{
+ "area": "velocidad",
+ "estado": "pendiente",
+ "orden": 11,
+ "prioridad": 1,
+ "siguiente": "Tomar la hoja Conducción de IMSEG del mes y marcar unidades a revisar con tacógrafo.",
+ "titulo": "Ranking de excesos de velocidad por chofer"
+}
