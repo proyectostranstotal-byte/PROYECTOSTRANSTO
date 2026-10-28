@@ -108,7 +108,7 @@ async function flotaAhora() {
     const g = o.gps || {};
     const tractor = (nombre.split("/")[1] || o.plate || "").replace(/\s+/g, "").toUpperCase();
     const fecha = g.date ? new Date(g.date * 1000) : null;
-    const edadMin = fecha ? Math.round((ahora - fecha) / 60000) : null;
+    const edadMin = fecha ? Math.max(0, Math.round((ahora - fecha) / 60000)) : null; // la PC va ~3 min atrasada respecto de Transdat
     const dist = g.lat != null ? distanciaKm(g.lat, g.lng, B.lat, B.lng) : null;
     const vel = Math.round(+g.speed || 0);
     let estado = "sin_senal";
