@@ -6,6 +6,7 @@
 //   flota_ahora      posiciones de Transdat + chofer (iButton) por cisterna        (solo lectura)
 //   estado_bots      tareas de Windows y logs de los bots                          (solo lectura)
 //   novedades        HR recibidas hoy por WhatsApp                                 (solo lectura)
+//   mapa_tile        imagen de fondo del mapa (OpenStreetMap, con caché en disco) (solo lectura)
 //   ejecutar_tarea   corre una tarea de la lista "tareas" de puente-config.json con ejecutar:true
 //
 // La salida estándar es SOLO para el protocolo; los mensajes de diagnóstico van a stderr.
@@ -185,7 +186,7 @@ async function novedades() {
     const d = new Date(h.fecha);
     if (isNaN(d) || hoyISO(d) !== hoy) continue;
     if ((h.tipo_doc || h.tipo) !== "hr") continue;
-    const destino = /^duplicado:/i.test(h.destino || "") ? "" : h.destino;
+    const destino = /^duplicado:|^[a-z]:\\|\\/i.test(h.destino || "") ? "" : h.destino; // a veces trae la ruta del archivo
     out.push({
       hora: d.toISOString(), tipo: "hr",
       texto: "HR " + (h.hr || "s/n") + (h.semi ? " · semi " + h.semi : "") + (destino ? " · " + destino : "") +
@@ -218,12 +219,33 @@ async function ejecutarTarea({ id }) {
   throw new Error("Tipo de tarea desconocido");
 }
 
+/* ---------- Mapa de fondo ----------
+   La página no puede bajar imágenes de OpenStreetMap (el visor lo bloquea), así que el puente
+   las baja, las guarda en disco 30 días y se las pasa como data: URI. */
+const DIR_TILES = path.join(__dirname, "tiles");
+async function mapaTile({ z, x, y }) {
+  z = +z; x = +x; y = +y;
+  const n = 2 ** z;
+  if (![z, x, y].every(Number.isInteger) || z < 3 || z > 17 || x < 0 || y < 0 || x >= n || y >= n) throw new Error("Tile fuera de rango");
+  const f = path.join(DIR_TILES, String(z), String(x), y + ".png");
+  let buf = null;
+  try { if (Date.now() - fs.statSync(f).mtimeMs < 30 * 864e5) buf = fs.readFileSync(f); } catch {}
+  if (!buf) {
+    const r = await fetch(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`, { headers: { "User-Agent": "Transtotal-panel/1.0 (uso interno, pocas unidades)" } });
+    if (!r.ok) throw new Error("OpenStreetMap respondió " + r.status);
+    buf = Buffer.from(await r.arrayBuffer());
+    try { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); } catch (e) { log("tile:", e.message); }
+  }
+  return { data: "data:image/png;base64," + buf.toString("base64") };
+}
+
 /* ---------- MCP (JSON-RPC 2.0 por stdio, un mensaje por línea) ---------- */
 const RO = { readOnlyHint: true, openWorldHint: false };
 const TOOLS = [
   { name: "flota_ahora", description: "Posición actual de cada cisterna (Transdat), estado y chofer.", inputSchema: { type: "object", properties: {} }, annotations: RO, run: flotaAhora },
   { name: "estado_bots", description: "Estado de las tareas programadas y los bots de la PC.", inputSchema: { type: "object", properties: {} }, annotations: RO, run: estadoBots },
   { name: "novedades", description: "Novedades del día: HR recibidas por WhatsApp.", inputSchema: { type: "object", properties: {} }, annotations: RO, run: novedades },
+  { name: "mapa_tile", description: "Imagen de fondo del mapa (OpenStreetMap) para z/x/y.", inputSchema: { type: "object", properties: { z: { type: "integer" }, x: { type: "integer" }, y: { type: "integer" } }, required: ["z", "x", "y"] }, annotations: RO, run: mapaTile },
   { name: "ejecutar_tarea", description: "Ejecuta ahora una tarea habilitada en puente-config.json.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }, run: ejecutarTarea },
 ];
 
@@ -267,7 +289,7 @@ process.stdin.on("data", d => {
 // Prueba desde la consola: node puente.js --probar
 if (process.argv.includes("--probar")) {
   (async () => {
-    for (const t of TOOLS.filter(t => t.annotations.readOnlyHint)) {
+    for (const t of TOOLS.filter(t => t.annotations.readOnlyHint && t.name !== "mapa_tile")) {
       try { const r = await t.run({}); console.error("== " + t.name + "\n" + JSON.stringify(r, null, 1).slice(0, 3000)); }
       catch (e) { console.error("== " + t.name + " ERROR: " + e.message); }
     }

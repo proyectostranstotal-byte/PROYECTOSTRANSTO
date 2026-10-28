@@ -508,16 +508,23 @@ $("add").addEventListener("submit",async e=>{
 const HOST="host:transtotal";
 const EST={en_viaje:"En viaje",detenida:"Detenida",en_base:"En la base",sin_senal:"Sin señal"};
 const CIUDADES=[["Rosario",-32.9468,-60.6393],["San Lorenzo",-32.7453,-60.736],["Santa Fe",-31.6333,-60.7],["Paraná",-31.7333,-60.5297],["Rafaela",-31.2503,-61.4867],["Villa Constitución",-33.2322,-60.3296],["San Nicolás",-33.3342,-60.2108],["Pergamino",-33.8895,-60.5736],["Campana",-34.1633,-58.9592],["Zárate",-34.0981,-59.0286],["Buenos Aires",-34.6037,-58.3816],["Casilda",-33.0442,-61.1681],["Cañada de Gómez",-32.8167,-61.3833],["Venado Tuerto",-33.7456,-61.9688],["Marcos Juárez",-32.6977,-62.1053],["Villa María",-32.4075,-63.2403],["Córdoba",-31.4201,-64.1888]];
-let vivo={flota:null,bots:null,nov:null,live:false,err:""},filtroEst="",mapa=null,capaU=null,encuadrado=false,selCis="",mcp=null;
+let vivo={flota:null,bots:null,nov:null,live:false,err:""},filtroEst="",mapa=null,capaU=null,capaFondo=null,fondoVivo=false,encuadrado=false,selCis="",mcp=null;
 const hhmm=iso=>{if(!iso)return"";const d=new Date(iso);return isNaN(d)?String(iso).slice(11,16):pad(d.getHours())+":"+pad(d.getMinutes())};
 const edad=m=>m==null?"—":m<2?"ahora":m<60?m+" min":m<48*60?Math.round(m/60)+" h":Math.round(m/1440)+" d";
 
 function iniciarMapa(){
   if(mapa||typeof L==="undefined")return;
   mapa=L.map("mapa",{zoomControl:true,attributionControl:true}).setView([-33.1,-60.6],8);
+  // El visor no deja bajar imágenes de OpenStreetMap: en la PC las trae el puente (mapa_tile).
   let fallas=0;
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"})
-    .on("tileerror",()=>{if(++fallas===4){const n=$("mapa-nota");n.hidden=false;n.textContent="El mapa de fondo no carga en esta vista; las posiciones y la columna Dónde son correctas."}}).addTo(mapa);
+  const Fondo=L.GridLayer.extend({createTile(c,done){
+    const img=document.createElement("img");img.alt="";img.setAttribute("role","presentation");
+    if(mcp&&vivo.live){mcp.callTool(HOST,"mapa_tile",{z:c.z,x:c.x,y:c.y},{cache:{staleTime:864e5,gcTime:864e5}}).then(r=>{img.src=r.payload?.data||"";done(null,img)},e=>done(e,img))}
+    else{img.onload=()=>done(null,img);img.onerror=e=>done(e,img);img.src=`https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`}
+    return img}});
+  capaFondo=new Fondo({minZoom:3,maxZoom:17,attribution:"© OpenStreetMap"})
+    .on("tileerror",()=>{if(++fallas===4&&!vivo.live){const n=$("mapa-nota");n.hidden=false;n.textContent="El mapa de fondo se ve solo en la app de Claude de la PC; las posiciones y la columna Dónde son correctas."}}).addTo(mapa);
+  fondoVivo=vivo.live;
   CIUDADES.forEach(([n,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:"",html:`<span class="ciudad">${esc(n)}</span>`,iconSize:[0,0]})}).addTo(mapa));
   capaU=L.layerGroup().addTo(mapa);
 }
@@ -555,6 +562,7 @@ function renderVivo(){
   const orden={en_viaje:0,detenida:1,en_base:2,sin_senal:3};
   $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
   if(f)dibujarMapa(f);
+  if(capaFondo&&vivo.live&&!fondoVivo){fondoVivo=true;$("mapa-nota").hidden=true;capaFondo.redraw()}
 
   // Novedades: HR del puente + excesos de hoy de la base + bots con problemas
   const h=hoyISO(),items=[];

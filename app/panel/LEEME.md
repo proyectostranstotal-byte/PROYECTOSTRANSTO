@@ -3,7 +3,7 @@
 Pestaña "Distribución en vivo" del Tablero Transtotal (`app/tablero.html`): mapa de las cisternas,
 novedades del día y botones para ejecutar tareas de la PC.
 
-- `puente.js`: servidor MCP local (stdio, sin dependencias, Node 18+). Corre en la PC NDIFABIO en
+- `puente.js` (flota_ahora, estado_bots, novedades, mapa_tile, ejecutar_tarea): servidor MCP local (stdio, sin dependencias, Node 18+). Corre en la PC NDIFABIO en
   `C:\jornada-bot\panel\` y lo lanza la app de Claude de escritorio con el nombre `transtotal`.
   La página lo llama como `host:transtotal` (capability `mcp`): solo funciona cuando el dueño abre
   el tablero en esa app. Cada lectura se guarda en la base del tablero (`meta/vivo_flota`,
