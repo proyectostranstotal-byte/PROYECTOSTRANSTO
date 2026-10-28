@@ -15,7 +15,7 @@
   "tareas": [
     { "id": "recibir-hr", "nombre": "Recibir HR de WhatsApp", "tipo": "windows", "tarea": "Jornada bot HR", "ejecutar": true,
       "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "recibir-hr_", "max_horas": 3 } },
-    { "id": "procesar-hr", "nombre": "Procesar HR", "tipo": "comando", "comando": "python", "args": ["C:\\jornada-bot\\procesar-hr.py"], "cwd": "C:\\jornada-bot", "ejecutar": true,
+    { "id": "procesar-hr", "nombre": "Procesar HR", "tipo": "comando", "comando": "python", "args": ["C:\\jornada-bot\\procesar-hr.py"], "cwd": "C:\\jornada-bot", "ejecutar": false, "aviso": "Necesita a Claude para leer las HR (tarea procesar-hr de la app): no se ejecuta desde el panel.",
       "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "procesar-hr_", "max_horas": 3 } },
     { "id": "controlar-excesos", "nombre": "Controlar excesos", "tipo": "windows", "tarea": "Controlar excesos", "ejecutar": true, "aviso": "Vuelve a mandar el mail de excesos.",
       "log": { "carpeta": "C:\\jornada-bot\\logs", "prefijo": "controlar-excesos_" } },

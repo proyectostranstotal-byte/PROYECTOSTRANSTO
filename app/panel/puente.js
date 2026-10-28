@@ -181,12 +181,14 @@ async function novedades() {
   const hoy = hoyISO(), out = [];
   const indice = leerJSON(CONFIG.archivos.indice_hr, []);
   for (const h of Array.isArray(indice) ? indice : []) {
-    const f = String(h.fecha || "");
-    if (!f.startsWith(hoy) && !f.startsWith(hoy.split("-").reverse().join("/"))) continue;
-    if (h.tipo !== "hr") continue;
+    // "fecha" viene en UTC (…Z): se compara con el día local para no pasar HR de la noche al día siguiente.
+    const d = new Date(h.fecha);
+    if (isNaN(d) || hoyISO(d) !== hoy) continue;
+    if ((h.tipo_doc || h.tipo) !== "hr") continue;
+    const destino = /^duplicado:/i.test(h.destino || "") ? "" : h.destino;
     out.push({
-      hora: f, tipo: "hr",
-      texto: "HR " + (h.hr || "s/n") + (h.semi ? " · semi " + h.semi : "") + (h.destino ? " · " + h.destino : "") +
+      hora: d.toISOString(), tipo: "hr",
+      texto: "HR " + (h.hr || "s/n") + (h.semi ? " · semi " + h.semi : "") + (destino ? " · " + destino : "") +
         (h.km_recorridos ? " · " + h.km_recorridos + " km" : "") + (h.nombre_contacto ? " · de " + h.nombre_contacto : ""),
       procesado: !!h.procesado, obs: h.observaciones || "",
     });
