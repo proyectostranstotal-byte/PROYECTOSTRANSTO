@@ -54,17 +54,6 @@ input,select{border-radius:3px}
 .est-en_viaje{--c:#2E9E6B}.est-detenida{--c:#E0A100}.est-en_base{--c:#06508F}.est-sin_senal{--c:#8A9096}
 .leaflet-container{background:#E8EDF1}
 
-/* Chat con la IA */
-.ia{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--tt-celeste);border-radius:4px;padding:14px 16px;display:grid;gap:10px}
-.ia-log{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:360px;overflow-y:auto}
-.ia-log li{padding:8px 12px;border-radius:4px;white-space:pre-wrap;max-width:85%}
-.ia-log .yo{justify-self:end;background:var(--tt-azul);color:#fff}
-.ia-log .bot{justify-self:start;background:var(--bg)}
-.ia-log .err{justify-self:start;background:var(--bad-soft)}
-.ia form{display:flex;gap:8px}
-.ia form input{flex:1}
-.ia-sug{display:flex;flex-wrap:wrap;gap:6px}
-.ia-sug button{font:500 .8rem var(--f-body);border:1px solid var(--tt-celeste);background:transparent;color:var(--ink);padding:3px 10px;border-radius:12px}
 .kv button[aria-pressed="true"] b{color:inherit}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
 :root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}

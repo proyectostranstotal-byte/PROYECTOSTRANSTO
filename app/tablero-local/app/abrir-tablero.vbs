@@ -6,7 +6,7 @@ Function Anda()
   On Error Resume Next
   Set h = CreateObject("MSXML2.ServerXMLHTTP.6.0")
   h.setTimeouts 2000, 2000, 2000, 2000
-  h.open "GET", URL & "/api/ia", False
+  h.open "GET", URL & "/api/choferes", False
   h.send
   Anda = (Err.Number = 0 And h.status = 200)
 End Function

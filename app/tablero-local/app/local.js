@@ -50,9 +50,5 @@
     callTool: (host, nombre, args) => post("/api/tool/" + enc(nombre), { args: args || {} }).then(j => ({ payload: j.payload })),
     invalidate: async () => { },
   };
-  const ia = {
-    estado: () => api("/api/ia"),
-    preguntar: mensajes => post("/api/ia", { mensajes }).then(j => j.respuesta),
-  };
-  window.claude = { use: async n => n === "db" ? db : n === "mcp" ? mcp : n === "ia" ? ia : null };
+  window.claude = { use: async n => n === "db" ? db : n === "mcp" ? mcp : null };
 })();

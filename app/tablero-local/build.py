@@ -33,9 +33,6 @@ cambiar('''  <header>
     <div class="tt-tit"><span class="tt-etq">Panel operativo · Air Liquide</span><h1>Tablero Transtotal</h1><span class="fecha" id="fecha"></span></div>
   </header>''')
 
-# Chat con la IA, después de las alertas
-CHAT_HTML = (AQUI / "chat.html").read_text(encoding="utf8")
-cambiar('''  <section aria-labelledby="vivo-h">''', CHAT_HTML + '''\n  <section aria-labelledby="vivo-h">''')
 
 # Mapa: fondo de calles (OpenStreetMap vía el puente) en la app local; si no carga, el mapa vectorial de siempre.
 cambiar('''function dibujarBase(){
@@ -66,8 +63,8 @@ cambiar('<span class="ad">${esc(a.d)}</span></li>', '<span class="ad">${esc(a.d)
 cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''', '''<td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">(a mano)</span>':''):'<span class="sub">—</span>'}</td>''')
 cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8") + '</div>\n\n<script>')
 
-# Script del chat al final
-CHAT_JS = (AQUI / "chat.js").read_text(encoding="utf8") + "\n" + (AQUI / "asignar.js").read_text(encoding="utf8")
+# Script de asignar chofer al final
+CHAT_JS = (AQUI / "asignar.js").read_text(encoding="utf8")
 i = src.rindex("</script>")
 src = src[:i] + "\n" + CHAT_JS + "\n" + src[i:]
 
