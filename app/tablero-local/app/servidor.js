@@ -57,6 +57,46 @@ function choferManual(asig, cis) {
   return tramos.find(t => (!t.desde || t.desde <= ahora) && (!t.hasta || ahora < t.hasta)) || null;
 }
 
+function guardarAsignaciones(asig) {
+  try { fs.copyFileSync(ASIGNACIONES, ASIGNACIONES + ".bak"); } catch { }
+  const tmp = ASIGNACIONES + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(asig, null, 2), "utf8");
+  fs.renameSync(tmp, ASIGNACIONES);
+}
+// Checklist Pre-Viaje (Google Sheet, el mismo que usa sin-gps.js): se relee cada 10 min.
+let cacheChecklist = { t: 0, entradas: [] };
+async function entradasChecklist() {
+  if (Date.now() - cacheChecklist.t < 10 * 60e3) return cacheChecklist.entradas;
+  cacheChecklist.t = Date.now();
+  try { cacheChecklist.entradas = await require(path.join(BOT, "checklist.js")).loadChecklist(); }
+  catch (e) { log("Checklist:", e.message); }
+  return cacheChecklist.entradas;
+}
+// Cisterna en movimiento sin chofer: si hoy hay un Pre-Viaje con la patente del tractor, se le asigna ese chofer
+// (como hace sin-gps.js) y queda guardado en asignaciones-manuales.json con fuente "checklist <patente>".
+async function asignarPorChecklist(unidades, asig) {
+  const sin = unidades.filter(u => !u.chofer && u.tractor && (u.estado === "en_viaje" || u.vel > 5));
+  if (!sin.length) return;
+  const entradas = await entradasChecklist();
+  if (!entradas.length) return;
+  const ck = require(path.join(BOT, "checklist.js"));
+  const ahora = Math.floor(Date.now() / 1000), d = new Date();
+  const desde = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000);
+  const patentes = unidades.map(x => x.tractor).filter(Boolean);
+  const lista = listaChoferes(), hoy = fechaHoy();
+  let cambio = false;
+  for (const u of sin) {
+    const pre = ck.choferPorPatente(entradas, u.tractor, desde, ahora, ahora, patentes);
+    const ch = pre && lista.find(x => ck.namesMatchFuzzy(x.nombre, pre.chofer));
+    if (!ch) continue;
+    ((asig[hoy] ||= {})[u.cis] = [{ nombre: ch.nombre, code: ch.code, fuente: "checklist " + pre.patente }]);
+    u.chofer = ch.nombre; u.chofer_manual = true; u.chofer_checklist = true;
+    cambio = true;
+    log("Checklist: asignado", ch.nombre, "a la", u.cis, "(Pre-Viaje con " + pre.patente + ")");
+  }
+  if (cambio) guardarAsignaciones(asig);
+}
+
 const log = (...a) => console.log(new Date().toLocaleString("es-AR"), ...a);
 
 /* ---------- Datos ---------- */
@@ -204,8 +244,9 @@ async function manejar(req, res) {
         for (const u of payload.unidades) {
           if (u.chofer) continue;
           const t = choferManual(asig, u.cis);
-          if (t) { u.chofer = t.nombre; u.chofer_manual = true; }
+          if (t) { u.chofer = t.nombre; u.chofer_manual = true; u.chofer_checklist = /^checklist/.test(t.fuente || ""); }
         }
+        try { await asignarPorChecklist(payload.unidades, asig); } catch (e) { log("Checklist:", e.message); }
       }
       return responder(res, 200, { payload });
     } catch (e) { return responder(res, 503, { error: e.message, code: e.code || "server_not_connected" }); }
@@ -230,10 +271,7 @@ async function manejar(req, res) {
       tramos.push(tramo);
     } else tramos = [hora ? { ...tramo, desde: hora } : tramo];
     dia[cis] = tramos;
-    try { fs.copyFileSync(ASIGNACIONES, ASIGNACIONES + ".bak"); } catch { }
-    const tmp = ASIGNACIONES + ".tmp";
-    fs.writeFileSync(tmp, JSON.stringify(asig, null, 2), "utf8");
-    fs.renameSync(tmp, ASIGNACIONES);
+    guardarAsignaciones(asig);
     log("Asignado", ch.nombre, "a la", cis, "el", fecha, hora ? "desde " + hora : "");
     return responder(res, 200, { ok: true, fecha, cis, tramos });
   }

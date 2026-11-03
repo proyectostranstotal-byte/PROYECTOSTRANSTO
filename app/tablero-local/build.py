@@ -60,7 +60,7 @@ cambiar('" · los botones funcionan solo en la app de Claude de la PC"', '" · s
 # Asignar chofer desde la alerta "en movimiento sin chofer" (escribe asignaciones-manuales.json)
 cambiar('d:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`};', 'd:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`,asig:1};')
 cambiar('<span class="ad">${esc(a.d)}</span></li>', '<span class="ad">${esc(a.d)}</span>${a.asig&&window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(a.cis)}">Asignar chofer</button>`:""}</li>')
-cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''', '''<td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">(a mano)</span>':''):(window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(u.cis)}">Asignar</button>`:'<span class="sub">—</span>')}</td>''')
+cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''', '''<td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">('+(u.chofer_checklist?'checklist':'a mano')+')</span>':''):(window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(u.cis)}">Asignar</button>`:'<span class="sub">—</span>')}</td>''')
 cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8") + '</div>\n\n<script>')
 
 # Excesos: solo desde noviembre 2026 (los de octubre quedan guardados en datos\excesos, pero no se muestran)
