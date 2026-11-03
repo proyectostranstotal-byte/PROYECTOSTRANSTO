@@ -3,7 +3,9 @@
 Cruza el plan del distribuidor (mails de Air Liquide) con las paradas satelitales y propone
 "unidad → HR probable". Sin IA ni API de pago. Corre en la PC NDIFABIO en `C:\jornada-bot\hr-deducir`.
 
-**Modo sombra** (desde 03/11/2026): calcula y mide aciertos, no escribe en el tablero.
+**Modo sombra** (desde 03/11/2026): calcula y mide aciertos. Única salida al tablero (pedido del usuario 03/11): `C:\jornada-bot\tablero\datos\meta\hr_en_curso.json` con la HR en curso por cisterna (columna HR de "Distribución en vivo"); se apaga con `"escribir_hr_en_curso": false`.
+
+Formato: `{generado, fecha, unidades: {"536": {hr, fuente: plan|recorrido|ambos, confianza 0-1, clientes[], visitados[], producto, detalle, otras_plan?}}}`.
 Para mostrarlo: `config.json` → `{"mostrar_en_tablero": true}` (escribe `tablero\datos\hr-probable\<fecha>-<unidad>.json`).
 
 | Archivo | Qué hace |

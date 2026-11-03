@@ -73,10 +73,47 @@ def deducir(fecha):
                           "alternativas": [n["hr"] for n in notas[1:3]],
                           "calculado": datetime.now(AR).isoformat(timespec="minutes")}
     guardar_json(ruta("predicciones", fecha + ".json"), salida)
+    if CONFIG.get("escribir_hr_en_curso", True) and fecha == datetime.now(AR).date().isoformat():
+        hr_en_curso(salida, cands, fecha)
     if CONFIG["mostrar_en_tablero"]:
         for u, s in salida.items():
             guardar_json(f'{CONFIG["tablero_datos"]}\\{fecha}-{u}.json', s)
     return salida
+
+CONF_NUM = {"alta": 0.9, "media": 0.6, "revisar": 0.5, "baja": 0.3}
+
+def hr_en_curso(salida, cands, fecha):
+    """Para la tabla "Distribución en vivo" del tablero: HR en curso por cisterna según
+    el plan del mail (Tomás LIN / Daniel LOX) y según el recorrido."""
+    unidades = {}
+    for r in cands:                                 # todo lo planificado para hoy
+        d = r["dias"].get(fecha)
+        if not d: continue
+        clientes = [r["clientes"][k] for k in sorted(r["clientes"], key=int)]
+        u = unidades.setdefault(d["cisterna"], {"hr": r["hr"], "fuente": "plan", "confianza": 0.3,
+            "clientes": clientes, "visitados": [], "producto": r.get("producto"),
+            "detalle": "Planta Acindar (carga)" if d.get("tipo") == "carga" else "Según el plan del mail"})
+        if u["hr"] != r["hr"]:
+            u.setdefault("otras_plan", []).append(r["hr"])
+    rutas = {r["hr"]: r for r in cands}
+    for unidad, p in salida.items():
+        r = rutas.get(p["hr"], {"clientes": {}})
+        vis = [v["cliente"] for v in p["visitados"]]
+        del_plan = {r2["hr"] for r2 in cands if r2["dias"].get(fecha, {}).get("cisterna") == unidad}
+        if p["hr"] in del_plan:
+            fuente = "ambos" if (vis or p["carga"]) else "plan"
+        else:
+            fuente = "recorrido"
+        det = ("Visitó " + ", ".join(f'{v["cliente"]} {v["hora"]}' for v in p["visitados"])) if vis \
+            else ("Pasó por Planta Acindar" if p["carga"] else "Según el plan del mail")
+        if fuente == "recorrido" and del_plan:
+            det += " (el plan decía " + ", ".join(sorted(del_plan)) + ")"
+        unidades[unidad] = {"hr": p["hr"], "fuente": fuente, "confianza": CONF_NUM.get(p["confianza"], 0.3),
+                            "clientes": [r["clientes"][k] for k in sorted(r["clientes"], key=int)],
+                            "visitados": vis, "producto": r.get("producto"), "detalle": det}
+    destino = CONFIG.get("hr_en_curso", r"C:\jornada-bot\tablero\datos\meta\hr_en_curso.json")
+    guardar_json(destino, {"generado": datetime.now(AR).isoformat(timespec="seconds"), "fecha": fecha,
+                           "unidades": dict(sorted(unidades.items()))})
 
 if __name__ == "__main__":
     fecha = sys.argv[1] if len(sys.argv) > 1 else datetime.now(AR).date().isoformat()
