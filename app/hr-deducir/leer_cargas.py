@@ -61,5 +61,17 @@ def leer(texto):
             x["nombre"] = re.sub(r"\s*-\s*(LIN.*|L|LIN A)?\s*$", "", x["texto"]).strip(" -")
     return plan
 
+def juntar(rutas, plan, recibido):
+    """Acumula los mails: cada HR guarda su ruta completa (clientes por número de
+    orden, de todos los mails) y por día la unidad/tarea del mail más nuevo."""
+    for c in plan:
+        r = rutas.setdefault(c["hr"], {"hr": c["hr"], "clientes": {}, "dias": {}})
+        if c.get("producto"): r["producto"] = c["producto"]
+        for x in c["clientes"]:
+            r["clientes"][str(x["orden"])] = x["nombre"]
+        r["dias"][c["fecha"]] = {"cisterna": c["cisterna"], "tipo": c["tipo"],
+                                 "planta": c.get("planta"), "mail": recibido}
+    return rutas
+
 if __name__ == "__main__":
     print(json.dumps(leer(open(sys.argv[1], encoding="utf-8").read()), ensure_ascii=False, indent=1))
