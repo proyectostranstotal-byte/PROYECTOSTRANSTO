@@ -75,6 +75,7 @@ def deducir(fecha):
     guardar_json(ruta("predicciones", fecha + ".json"), salida)
     if CONFIG.get("escribir_hr_en_curso", True) and fecha == datetime.now(AR).date().isoformat():
         hr_en_curso(salida, cands, fecha)
+        hr_cerradas(rutas, fecha)
     if CONFIG["mostrar_en_tablero"]:
         for u, s in salida.items():
             guardar_json(f'{CONFIG["tablero_datos"]}\\{fecha}-{u}.json', s)
@@ -114,6 +115,49 @@ def hr_en_curso(salida, cands, fecha):
     destino = CONFIG.get("hr_en_curso", r"C:\jornada-bot\tablero\datos\meta\hr_en_curso.json")
     guardar_json(destino, {"generado": datetime.now(AR).isoformat(timespec="seconds"), "fecha": fecha,
                            "unidades": dict(sorted(unidades.items()))})
+
+def hr_cerradas(rutas, fecha):
+    """HR que ya terminaron (la unidad empezó otra HR, o pasó su último día del plan)
+    y cuyo PDF todavía no está en hr.db: para Novedades del tablero ("falta recibirla")."""
+    import os, sqlite3
+    try:
+        con = sqlite3.connect(CONFIG["hr_db"])
+        recibidas = {str(h)[-6:] for (h,) in con.execute("select hr from hr")}
+        con.close()
+    except Exception:
+        return                                       # sin base no se puede decir qué falta
+    desde = CONFIG.get("cerradas_desde", "2026-10-28")
+    por_unidad = {}                                  # unidad -> [(primer_dia, ultimo_dia, hr)]
+    for r in rutas.values():
+        for d, info in r["dias"].items():
+            por_unidad.setdefault(info["cisterna"], {}).setdefault(r["hr"], []).append(d)
+    pred = {}
+    carpeta = ruta("predicciones")
+    for f in os.listdir(carpeta) if os.path.isdir(carpeta) else []:
+        for u, p in leer_json(os.path.join(carpeta, f), {}).items():
+            if p.get("visitados") or p.get("carga"):
+                pred.setdefault((u, p["hr"]), []).append(f[:-5])
+    lista = []
+    for unidad, hrs in por_unidad.items():
+        # en orden de inicio (mismo día: la de número menor va primero, como en el mail)
+        tramos = sorted((min(ds), int(hr), max(ds), hr) for hr, ds in hrs.items())
+        tramos = [(a, c, d) for a, _, c, d in tramos]
+        for i, (ini, fin, hr) in enumerate(tramos):
+            siguiente = tramos[i + 1] if i + 1 < len(tramos) and tramos[i + 1][0] <= fecha else None
+            if fin < desde or hr in recibidas or (fin >= fecha and not siguiente):
+                continue
+            if siguiente:
+                motivo = f"La {unidad} empezó la HR {siguiente[2]} el {siguiente[0][8:10]}/{siguiente[0][5:7]}"
+            else:
+                motivo = f"Último día en el plan: {fin[8:10]}/{fin[5:7]}"
+            lista.append({"hr": hr, "cisterna": unidad, "cerrada": siguiente[0] if siguiente else fin,
+                          "motivo": motivo, "producto": rutas[hr].get("producto"),
+                          "evidencia": "recorrido" if (unidad, hr) in pred else "plan",
+                          "nota": None if (unidad, hr) in pred else "Sin recorrido que lo confirme: puede estar anulada"})
+    lista.sort(key=lambda x: (x["cerrada"], x["cisterna"]))
+    guardar_json(CONFIG.get("hr_cerradas", r"C:\jornada-bot\tablero\datos\meta\hr_cerradas.json"),
+                 {"generado": datetime.now(AR).isoformat(timespec="seconds"), "fecha": fecha,
+                  "faltan_recibir": lista})
 
 if __name__ == "__main__":
     fecha = sys.argv[1] if len(sys.argv) > 1 else datetime.now(AR).date().isoformat()

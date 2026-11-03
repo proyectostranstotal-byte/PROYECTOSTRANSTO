@@ -24,3 +24,11 @@ Una ubicación se puede fijar a mano en `clientes.json` con `"fijo": true` (apre
 Nota (03/11/2026): la copia de la PC tiene su propia versión de satelital.py y en config.json
 "transdat_historial" con {id} y {tipo}. La del repo usa {object} y {type}: si se reemplaza
 satelital.py por la del repo, borrar "transdat_historial" de config.json.
+
+## HR cerradas que faltan recibir (pedido del usuario 03/11/2026)
+`deducir_hr.py` también escribe `C:\jornada-bot\tablero\datos\meta\hr_cerradas.json` cada hora:
+`{generado, fecha, faltan_recibir: [{hr, cisterna, cerrada, motivo, producto, evidencia: recorrido|plan, nota}]}`.
+Una HR se da por cerrada cuando la misma cisterna empezó la HR siguiente del plan (o pasó su último día),
+y figura solo si su PDF no está en hr.db. Solo HR desde `cerradas_desde` (28/10/2026). Con evidencia
+"plan" (sin recorrido que la confirme) puede ser una HR anulada por Air Liquide. El tablero la muestra en
+Novedades para que el usuario se la pida al chofer; el bot no escribe a nadie.
