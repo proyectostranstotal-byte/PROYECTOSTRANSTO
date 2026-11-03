@@ -10,7 +10,7 @@ Para mostrarlo: `config.json` → `{"mostrar_en_tablero": true}` (escribe `table
 | --- | --- |
 | `leer-cargas.ps1` | Outlook → `mails\AAAAMMDD-HHMMSS_LIN|LOX.txt`. LIN: Tomás Moya, "Hojas de Ruta LIN Transtotal DD-MM-AAAA". LOX: Daniel Castillo, "LOX - TTT …" y "LOX - SEMIS TTT …". Solo lee. |
 | `leer_cargas.py` | Grilla del mail → `rutas.json` (por HR: clientes por nº de orden juntando todos los mails, y unidad/tipo por día; el mail más nuevo manda para cada día). "Planta Acindar" = carga para esa HR. |
-| `satelital.py` | Wialon (token de `C:\jornada-bot\token.js`) → paradas de 15 min o más fuera de la base → `paradas\<fecha>.json`. |
+| `satelital.py` | Transdat (credenciales de `C:\ExcesosVelocidad\transdat.json`, como el panel; NO Wialon) → paradas de 15 min o más fuera de la base → `paradas\<fecha>.json`. |
 | `deducir_hr.py` | Puntaje por HR candidata (día anterior, mismo y siguiente; también HR de otras unidades) → `predicciones\<fecha>.json`. |
 | `aprender.py` | HR confirmadas en `hr.db` + paradas → `clientes.json` (ubicaciones), `lugares-comunes.json` (planta, paradores) y `aciertos.json` (por semana y confianza). |
 

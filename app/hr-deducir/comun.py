@@ -3,7 +3,9 @@ import json, math, os, re, unicodedata
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 CONFIG = {
-    "token_wialon": r"C:\jornada-bot\token.js",   # el mismo token que usa el bot de jornada
+    "transdat_url": "https://clientes.transdat.com.ar",
+    "transdat_credenciales": r"C:\ExcesosVelocidad\transdat.json",   # las mismas que usa el panel
+    "transdat_historial": "/v1/objects/{id}/history?from={desde}&to={hasta}",  # A CONFIRMAR en la PC
     "hr_db": r"C:\jornada-bot\hr.db",
     "base": [-32.8639, -60.7676], "radio_base_km": 1.0,
     "parada_min": 15, "vel_parada": 3, "radio_cliente_km": 2.0, "radio_aprender_km": 1.0,

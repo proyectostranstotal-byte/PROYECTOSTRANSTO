@@ -5,21 +5,18 @@ import os, sqlite3
 from collections import defaultdict
 from datetime import datetime
 from comun import CONFIG, km, ruta, leer_json, guardar_json, clave
-from satelital import AR, paradas_del_dia, Wialon
+from satelital import AR, paradas_del_dia, Transdat
 
 def confirmadas():
-    """{hr: cisterna} desde hr.db. Busca la tabla que tenga columnas de nº de HR y de cisterna."""
+    """{hr: cisterna} de la tabla hr de hr.db (columnas hr y semi), sin las pendientes."""
     con = sqlite3.connect(CONFIG["hr_db"])
     try:
-        for (t,) in con.execute("select name from sqlite_master where type='table'"):
-            cols = [c[1] for c in con.execute(f'pragma table_info("{t}")')]
-            c_hr = next((c for c in cols if c.lower() in ("hr", "nro_hr", "numero", "nro", "hr_nro")), None)
-            c_un = next((c for c in cols if c.lower() in ("cisterna", "unidad", "semi")), None)
-            if c_hr and c_un:
-                return {str(h)[-6:]: str(u)[:3] for h, u in con.execute(f'select "{c_hr}", "{c_un}" from "{t}"') if h and u}
+        cols = [c[1] for c in con.execute('pragma table_info("hr")')]
+        filtro = " and coalesce(origen,'') <> 'pendiente'" if "origen" in cols else ""
+        filas = con.execute(f"select hr, semi from hr where semi is not null and trim(semi) <> ''{filtro}")
+        return {str(h)[-6:]: str(u).strip()[:3] for h, u in filas if h}
     finally:
         con.close()
-    raise RuntimeError("No encontré en hr.db una tabla con nº de HR y cisterna: ajustar confirmadas()")
 
 def agrupar(votos, radio):
     """Agrupa votos [(lat,lng,hr,peso)] en lugares; devuelve [(lat,lng,hrs distintas,peso)] de mayor a menor."""
@@ -37,7 +34,7 @@ def aprender():
     conf = confirmadas()
     hoy = datetime.now(AR).date().isoformat()
     por_hr, carga = {}, []          # paradas de la unidad confirmada en los días de cada HR
-    with Wialon() as w:
+    with Transdat() as w:
         for hr, unidad in conf.items():
             r = rutas.get(hr)
             if not r: continue

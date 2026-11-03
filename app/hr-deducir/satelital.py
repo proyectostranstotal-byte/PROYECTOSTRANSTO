@@ -1,46 +1,52 @@
-"""Recorrido de cada cisterna desde Wialon (mismo token que el bot de jornada)
-y detección de paradas. Sin dependencias."""
+"""Recorrido de cada cisterna desde Transdat (NO Wialon: decisión del usuario)
+y detección de paradas. Sin dependencias.
+Transdat: POST /auth {user, pass} -> token; GET /v1/objects/ -> unidades (o.gps.*).
+El historial de posiciones se pide a CONFIG["transdat_historial"] (plantilla con
+{id}, {desde}, {hasta} en epoch s); confirmar la ruta real en la PC."""
 import json, re, time, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 from comun import CONFIG, km, ruta, leer_json, guardar_json
 
-API = "https://hst-api.wialon.com/wialon/ajax.html"
 AR = timezone(timedelta(hours=-3))
 
-def _token():
-    txt = open(CONFIG["token_wialon"], encoding="utf-8").read()
-    return re.search(r"['\"]([0-9a-fA-F]{40,})['\"]", txt).group(1)
+def _get(url, token=None, data=None):
+    h = {"Content-Type": "application/json"}
+    if token: h["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(url, data=json.dumps(data).encode() if data is not None else None, headers=h)
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)
 
-def _call(svc, params, sid=None):
-    q = {"svc": svc, "params": json.dumps(params)}
-    if sid: q["sid"] = sid
-    with urllib.request.urlopen(API + "?" + urllib.parse.urlencode(q), timeout=60) as r:
-        d = json.load(r)
-    if isinstance(d, dict) and d.get("error"):
-        raise RuntimeError(f"Wialon {svc} error {d['error']}")
-    return d
-
-class Wialon:
+class Transdat:
+    """Se usa como `with Transdat() as t:` (mismo login que puente.js del panel)."""
     def __enter__(self):
-        self.sid = _call("token/login", {"token": _token()})["eid"]
+        cred = json.load(open(CONFIG["transdat_credenciales"], encoding="utf-8"))
+        self.url = CONFIG["transdat_url"]
+        self.token = _get(self.url + "/auth", data={
+            "user": cred.get("user") or cred.get("usuario"),
+            "pass": cred.get("pass") or cred.get("password") or cred.get("clave")})["token"]
         return self
-    def __exit__(self, *a):
-        try: _call("core/logout", {}, self.sid)
-        except Exception: pass
+    def __exit__(self, *a): pass
     def unidades(self):
-        """{'561': id_wialon, ...} por los 3 primeros dígitos del nombre."""
-        d = _call("core/search_items", {"spec": {"itemsType": "avl_unit", "propName": "sys_name",
-              "propValueMask": "*", "sortType": "sys_name"}, "force": 1, "flags": 1, "from": 0, "to": 0}, self.sid)
+        """{'561': id_transdat, ...} por los 3 primeros dígitos del nombre."""
+        objs = _get(self.url + "/v1/objects/", self.token)
+        if isinstance(objs, dict): objs = objs.get("objects") or objs.get("data") or list(objs.values())
         out = {}
-        for it in d.get("items", []):
-            m = re.match(r"^(\d{3})", it.get("nm", ""))
-            if m: out[m.group(1)] = it["id"]
+        for o in objs:
+            m = re.match(r"^\s*(\d{3})", str(o.get("name") or o.get("nombre") or o.get("alias") or ""))
+            if m: out[m.group(1)] = o.get("id") or o.get("_id")
         return out
     def posiciones(self, uid, desde, hasta):
-        d = _call("messages/load_interval", {"itemId": uid, "timeFrom": int(desde), "timeTo": int(hasta),
-              "flags": 1, "flagsMask": 65281, "loadCount": 0xFFFFFFFF}, self.sid)
-        return [(m["t"], m["pos"]["y"], m["pos"]["x"], m["pos"].get("s", 0))
-                for m in d.get("messages", []) if m.get("pos") and m["pos"].get("y")]
+        url = self.url + CONFIG["transdat_historial"].format(id=uid, desde=int(desde), hasta=int(hasta))
+        d = _get(url, self.token)
+        if isinstance(d, dict): d = d.get("positions") or d.get("data") or d.get("items") or []
+        out = []
+        for p in d:
+            g = p.get("gps", p)
+            t, lat, lng = g.get("date") or g.get("t") or g.get("time"), g.get("lat"), g.get("lng") or g.get("lon")
+            if t and lat and lng:
+                out.append((float(t), float(lat), float(lng), float(g.get("speed") or g.get("s") or 0)))
+        return sorted(out)
+
 
 def paradas(pos):
     """Detenciones de parada_min o más, fuera de la base. [{ini, fin, min, lat, lng}]"""
@@ -63,7 +69,7 @@ def paradas(pos):
     cerrar()
     return out
 
-def paradas_del_dia(fecha, wialon=None, cache=True):
+def paradas_del_dia(fecha, fuente=None, cache=True):
     """{'561': [paradas]} para la fecha (AAAA-MM-DD, hora Argentina). Días pasados quedan en caché."""
     f = ruta("paradas", fecha + ".json")
     hoy = datetime.now(AR).date().isoformat()
@@ -72,8 +78,8 @@ def paradas_del_dia(fecha, wialon=None, cache=True):
         if c is not None: return c
     d0 = datetime.fromisoformat(fecha).replace(tzinfo=AR)
     desde, hasta = d0.timestamp(), (d0 + timedelta(days=1)).timestamp()
-    own = wialon is None
-    w = Wialon().__enter__() if own else wialon
+    own = fuente is None
+    w = Transdat().__enter__() if own else fuente
     try:
         res = {}
         for u, uid in w.unidades().items():
