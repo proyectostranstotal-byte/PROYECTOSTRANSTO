@@ -61,6 +61,7 @@ def leer(texto, producto=None):
         t = " ".join(x["texto"] for x in c["clientes"])
         c["producto"] = producto or ("LOX" if re.search(r"-\s*LOX\b", t) else None) or ("LIN" if re.search(r"-\s*L(IN)?\b|-LIN", t) else None)
         for x in c["clientes"]:
+            x["texto"] = re.sub(r"\s+", " ", x["texto"]).strip()
             x["nombre"] = re.sub(r"\s*-\s*(LIN.*|LOX.*|L|LO|LIN A)?\s*$", "", x["texto"]).strip(" -")
     return plan
 
