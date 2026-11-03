@@ -29,7 +29,7 @@ cambiar('''  <header>
     <h1>Tablero Transtotal</h1>
     <span class="fecha" id="fecha"></span>
   </header>''', '''  <header class="tt-head">
-    <picture class="tt-logo"><source media="(prefers-color-scheme: dark)" srcset="https://www.transtotal.com.ar/wp-content/uploads/2026/09/transtotal-group-blanco.png"><img src="https://www.transtotal.com.ar/wp-content/uploads/2026/09/transtotal-group-blanco.png" alt="Transtotal Group" onerror="this.closest('picture').hidden=true"></picture>
+    <picture class="tt-logo"><source media="(prefers-color-scheme: dark)" srcset="marca/logo-blanco.png"><img src="marca/logo-blanco.png" alt="Transtotal Group" onerror="this.closest('picture').hidden=true"></picture>
     <div class="tt-tit"><span class="tt-etq">Panel operativo · Air Liquide</span><h1>Tablero Transtotal</h1><span class="fecha" id="fecha"></span></div>
   </header>''')
 
@@ -37,7 +37,7 @@ cambiar('''  <header>
 CHAT_HTML = (AQUI / "chat.html").read_text(encoding="utf8")
 cambiar('''  <section aria-labelledby="vivo-h">''', CHAT_HTML + '''\n  <section aria-labelledby="vivo-h">''')
 
-# Mapa: fondo de calles (CARTO/OpenStreetMap) en la app local; si no carga, el mapa vectorial de siempre.
+# Mapa: fondo de calles (OpenStreetMap vía el puente) en la app local; si no carga, el mapa vectorial de siempre.
 cambiar('''function dibujarBase(){
   if(!mapa||!base)return;''', '''let tilesOk=null,capaTiles=null;
 function dibujarBase(){
@@ -45,10 +45,9 @@ function dibujarBase(){
 cambiar('''  capaU=L.layerGroup().addTo(mapa);
   dibujarBase();''', '''  capaU=L.layerGroup().addTo(mapa);
   if(window.TABLERO_LOCAL){
-    const oscuro=matchMedia("(prefers-color-scheme: dark)").matches;
     let fallas=0;
     mapa.setMaxZoom(17);
-    capaTiles=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/"+(oscuro?"dark_all":"voyager")+"/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"© OpenStreetMap · © CARTO"}).addTo(mapa);
+    capaTiles=L.tileLayer("tile/{z}/{x}/{y}.png",{minZoom:3,maxZoom:17,attribution:"© OpenStreetMap"}).addTo(mapa);
     capaTiles.on("tileload",()=>{tilesOk=true});
     capaTiles.on("tileerror",()=>{if(tilesOk||++fallas<4)return;tilesOk=false;mapa.removeLayer(capaTiles);dibujarBase()});
     mapa.attributionControl.removeAttribution("Natural Earth");

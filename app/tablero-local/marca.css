@@ -27,7 +27,8 @@ h2::before{content:"►";color:var(--tt-celeste);font-size:.6em;vertical-align:.
 /* Encabezado: degradado azul con la trama de flechas en la esquina */
 header.tt-head{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
   border:0;padding:22px 24px;color:#fff;border-radius:4px;
-  background:url("https://www.transtotal.com.ar/wp-content/uploads/2025/07/tramaflecha-1.png") right -40px center/auto 160% no-repeat,linear-gradient(135deg,#06508F,#4FA4CC)}
+  justify-content:flex-start;
+  background:url("marca/trama.png") right -30px center/auto 130% no-repeat,linear-gradient(135deg,#06508F,#4FA4CC)}
 .tt-logo img{display:block;height:54px;width:auto}
 .tt-tit{display:grid;gap:2px}
 .tt-etq{font:600 .7rem var(--f-body);letter-spacing:.25em;text-transform:uppercase;opacity:.85}
@@ -65,3 +66,5 @@ input,select{border-radius:3px}
 .ia-sug{display:flex;flex-wrap:wrap;gap:6px}
 .ia-sug button{font:500 .8rem var(--f-body);border:1px solid var(--tt-celeste);background:transparent;color:var(--ink);padding:3px 10px;border-radius:12px}
 .kv button[aria-pressed="true"] b{color:inherit}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}

@@ -240,7 +240,8 @@ h2::before{content:"►";color:var(--tt-celeste);font-size:.6em;vertical-align:.
 /* Encabezado: degradado azul con la trama de flechas en la esquina */
 header.tt-head{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
   border:0;padding:22px 24px;color:#fff;border-radius:4px;
-  background:url("https://www.transtotal.com.ar/wp-content/uploads/2025/07/tramaflecha-1.png") right -40px center/auto 160% no-repeat,linear-gradient(135deg,#06508F,#4FA4CC)}
+  justify-content:flex-start;
+  background:url("marca/trama.png") right -30px center/auto 130% no-repeat,linear-gradient(135deg,#06508F,#4FA4CC)}
 .tt-logo img{display:block;height:54px;width:auto}
 .tt-tit{display:grid;gap:2px}
 .tt-etq{font:600 .7rem var(--f-body);letter-spacing:.25em;text-transform:uppercase;opacity:.85}
@@ -278,13 +279,15 @@ input,select{border-radius:3px}
 .ia-sug{display:flex;flex-wrap:wrap;gap:6px}
 .ia-sug button{font:500 .8rem var(--f-body);border:1px solid var(--tt-celeste);background:transparent;color:var(--ink);padding:3px 10px;border-radius:12px}
 .kv button[aria-pressed="true"] b{color:inherit}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
 </style>
 <script src="local.js"></script>
 <script src="leaflet.js" async onload="window.__leafletOk&&window.__leafletOk()"></script>
 
 <div class="wrap">
   <header class="tt-head">
-    <picture class="tt-logo"><source media="(prefers-color-scheme: dark)" srcset="https://www.transtotal.com.ar/wp-content/uploads/2026/09/transtotal-group-blanco.png"><img src="https://www.transtotal.com.ar/wp-content/uploads/2026/09/transtotal-group-blanco.png" alt="Transtotal Group" onerror="this.closest('picture').hidden=true"></picture>
+    <picture class="tt-logo"><source media="(prefers-color-scheme: dark)" srcset="marca/logo-blanco.png"><img src="marca/logo-blanco.png" alt="Transtotal Group" onerror="this.closest('picture').hidden=true"></picture>
     <div class="tt-tit"><span class="tt-etq">Panel operativo · Air Liquide</span><h1>Tablero Transtotal</h1><span class="fecha" id="fecha"></span></div>
   </header>
 
@@ -662,10 +665,9 @@ function iniciarMapa(){
   mapa.on("zoomend moveend",ajustarZoom);
   capaU=L.layerGroup().addTo(mapa);
   if(window.TABLERO_LOCAL){
-    const oscuro=matchMedia("(prefers-color-scheme: dark)").matches;
     let fallas=0;
     mapa.setMaxZoom(17);
-    capaTiles=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/"+(oscuro?"dark_all":"voyager")+"/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"© OpenStreetMap · © CARTO"}).addTo(mapa);
+    capaTiles=L.tileLayer("tile/{z}/{x}/{y}.png",{minZoom:3,maxZoom:17,attribution:"© OpenStreetMap"}).addTo(mapa);
     capaTiles.on("tileload",()=>{tilesOk=true});
     capaTiles.on("tileerror",()=>{if(tilesOk||++fallas<4)return;tilesOk=false;mapa.removeLayer(capaTiles);dibujarBase()});
     mapa.attributionControl.removeAttribution("Natural Earth");

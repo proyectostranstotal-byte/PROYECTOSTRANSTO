@@ -21,6 +21,24 @@ const SOLO_ESTA_PC = new Set(["ejecutar_tarea"]);
 const ESTATICOS = { "/": "index.html", "/index.html": "index.html", "/local.js": "local.js", "/basemap.json": "basemap.json", "/leaflet.js": "leaflet.js" };
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
 
+// Imágenes de la marca: el sitio de Transtotal no deja usarlas desde otra página, así que el servidor las baja
+// una vez (sin Referer) y las guarda en marca\.
+const MARCA = {
+  "logo-blanco.png": "https://www.transtotal.com.ar/wp-content/uploads/2026/09/transtotal-group-blanco.png",
+  "logo-color.png": "https://www.transtotal.com.ar/wp-content/uploads/2026/09/trantotal-group.png",
+  "trama.png": "https://www.transtotal.com.ar/wp-content/uploads/2025/07/tramaflecha-1.png",
+};
+async function imagenMarca(nombre) {
+  const f = path.join(DIR, "marca", nombre);
+  if (fs.existsSync(f)) return fs.readFileSync(f);
+  const r = await fetch(MARCA[nombre]);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const b = Buffer.from(await r.arrayBuffer());
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, b);
+  return b;
+}
+
 const log = (...a) => console.log(new Date().toLocaleString("es-AR"), ...a);
 
 /* ---------- Datos ---------- */
@@ -159,6 +177,20 @@ async function manejar(req, res) {
   if (req.method === "GET" && ESTATICOS[url.pathname]) {
     const f = path.join(DIR, ESTATICOS[url.pathname]);
     return fs.readFile(f, (e, d) => e ? responder(res, 404, { error: "no existe" }) : responder(res, 200, d, TIPOS[path.extname(f)]));
+  }
+  if (req.method === "GET" && partes[0] === "marca" && MARCA[partes[1]]) {
+    try { res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "max-age=86400" }); return res.end(await imagenMarca(partes[1])); }
+    catch (e) { log("Imagen de marca", partes[1], e.message); return responder(res, 404, { error: "sin imagen" }); }
+  }
+  // Fondo del mapa: tiles de OpenStreetMap que baja y guarda el puente (herramienta mapa_tile, caché en panel\tiles).
+  if (req.method === "GET" && partes[0] === "tile" && partes.length === 4) {
+    try {
+      const m = await rpc("tools/call", { name: "mapa_tile", arguments: { z: +partes[1], x: +partes[2], y: parseInt(partes[3]) } }, 30000);
+      const d = m.result?.structuredContent?.data || "";
+      if (m.result?.isError || !d.startsWith("data:image/png;base64,")) return responder(res, 404, { error: "sin tile" });
+      res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "max-age=604800" });
+      return res.end(Buffer.from(d.slice(22), "base64"));
+    } catch (e) { return responder(res, 503, { error: e.message }); }
   }
   if (partes[0] !== "api") return responder(res, 404, { error: "no existe" });
   // Los POST llevan este encabezado: otra página web no puede mandarlo sin permiso del servidor.
