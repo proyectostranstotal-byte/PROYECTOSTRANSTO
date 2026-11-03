@@ -73,8 +73,27 @@ def juntar(rutas, plan, recibido):
         for x in c["clientes"]:
             r["clientes"][str(x["orden"])] = x["nombre"]
         r["dias"][c["fecha"]] = {"cisterna": c["cisterna"], "tipo": c["tipo"],
-                                 "planta": c.get("planta"), "mail": recibido}
+                                 "planta": c.get("planta"), "mail": recibido,
+                                 "ordenes": [x["orden"] for x in c["clientes"]]}
+    return rutas
+
+def actualizar_rutas():
+    """Lee todos los mails bajados (mails/*.txt, del más viejo al más nuevo) y
+    arma rutas.json: por HR, sus clientes y en qué unidad/día figura."""
+    import os
+    from comun import ruta, guardar_json
+    rutas = {}
+    for f in sorted(os.listdir(ruta("mails"))):
+        if not f.endswith(".txt"): continue
+        sello, prod = f[:-4].split("_")[:2]
+        texto = open(ruta("mails", f), encoding="utf-8-sig").read()
+        juntar(rutas, leer(texto, prod), sello)
+    guardar_json(ruta("rutas.json"), rutas)
     return rutas
 
 if __name__ == "__main__":
-    print(json.dumps(leer(open(sys.argv[1], encoding="utf-8").read()), ensure_ascii=False, indent=1))
+    if len(sys.argv) > 1 and sys.argv[1] != "--rutas":
+        print(json.dumps(leer(open(sys.argv[1], encoding="utf-8").read()), ensure_ascii=False, indent=1))
+    else:
+        r = actualizar_rutas()
+        print(f"rutas.json: {len(r)} HR")
