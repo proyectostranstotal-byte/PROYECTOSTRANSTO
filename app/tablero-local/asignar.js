@@ -7,7 +7,10 @@
     e.stopPropagation();
     cisAsig=b.dataset.asig;
     $("asig-t").textContent="Asignar chofer a la "+cisAsig;$("asig-err").hidden=true;$("asig-desde").value="";
-    try{const l=await fetch("api/choferes").then(r=>r.json());$("asig-ch").innerHTML='<option value="">Elegí el chofer…</option>'+l.map(c=>`<option>${esc(c.nombre)}</option>`).join("")}catch(err){}
+    try{
+      const r=await fetch("api/choferes");if(!r.ok)throw new Error("el servidor no tiene la lista (reiniciá el tablero)");
+      const l=await r.json();$("asig-ch").innerHTML='<option value="">Elegí el chofer…</option>'+l.map(c=>`<option>${esc(c.nombre)}</option>`).join("");
+    }catch(err){$("asig-ch").innerHTML="";$("asig-err").hidden=false;$("asig-err").textContent="No se pudo cargar la lista de choferes: "+err.message}
     $("asig-dlg").showModal();
   },true);
   $("asig-x").addEventListener("click",()=>$("asig-dlg").close());

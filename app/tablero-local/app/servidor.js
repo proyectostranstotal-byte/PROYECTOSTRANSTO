@@ -251,4 +251,10 @@ servidor.listen(PUERTO, "0.0.0.0", () => {
   log("Tablero Transtotal en http://localhost:" + PUERTO + " (también desde la red con el nombre de esta PC).");
   arrancarPuente();
 });
+// Si se actualiza este archivo, el servidor se cierra con código 3 y tablero-loop.bat lo vuelve a arrancar.
+fs.watchFile(__filename, { interval: 5000 }, () => {
+  log("servidor.js cambió: reinicio.");
+  try { puente && puente.kill(); } catch { }
+  process.exit(3);
+});
 process.on("uncaughtException", e => log("Error no esperado:", e.stack || e.message));
