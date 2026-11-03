@@ -14,6 +14,8 @@ def fecha_iso(m):
 
 def leer(texto, producto=None):
     """producto: "LOX" o "LIN" según el asunto del mail (los LOX dicen "LOX - TTT ..." / "LOX - SEMIS TTT ...")."""
+    # Outlook convierte "2.LA" en link y en texto plano queda "2.LA<http://2.la/>"
+    texto = re.sub(r"<(https?|mailto):[^>]*>", "", texto)
     lineas = texto.replace("\r", "").split("\n")
     fechas_pos, cols = [], []          # posición de cada fecha / inicio de cada columna
     plan, unidad, celdas = [], None, {}
