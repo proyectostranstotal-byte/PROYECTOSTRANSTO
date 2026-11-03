@@ -373,7 +373,7 @@ const fmtFecha=iso=>{if(!iso)return"";const [y,m,d]=iso.slice(0,10).split("-");r
 const INICIO_INCENTIVOS="2026-11-01";
 const EXCESOS_DESDE="2026-11-01";
 function armarFaltas(){
-  const auto=excesos.filter(e=>e.requiere!==false&&e.resultado!=="justificado").map(e=>({id:"ex:"+e.id,fecha:e.fecha,chofer:e.chofer||"Sin chofer",falta:[e.tipo,e.detalle].filter(Boolean).join(": "),avisado:!!e.avisado,avisado_fecha:e.avisado_fecha||"",auto:true}));
+  const auto=excesos.filter(e=>e.requiere!==false&&e.resultado!=="justificado"&&!/^\s*N\/?A\b/i.test(e.comentario||"")).map(e=>({id:"ex:"+e.id,fecha:e.fecha,chofer:e.chofer||"Sin chofer",falta:[e.tipo,e.detalle].filter(Boolean).join(": "),avisado:!!e.avisado,avisado_fecha:e.avisado_fecha||"",auto:true}));
   faltas=faltasMan.concat(auto);
 }
 const META_AUD=[4,5];
