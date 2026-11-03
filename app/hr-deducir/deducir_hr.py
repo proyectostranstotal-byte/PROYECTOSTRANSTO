@@ -74,8 +74,8 @@ def deducir(fecha):
                           "calculado": datetime.now(AR).isoformat(timespec="minutes")}
     guardar_json(ruta("predicciones", fecha + ".json"), salida)
     if CONFIG.get("escribir_hr_en_curso", True) and fecha == datetime.now(AR).date().isoformat():
-        hr_en_curso(salida, cands, fecha)
-        hr_cerradas(rutas, fecha)
+        abiertas = hr_cerradas(rutas, fecha)
+        hr_en_curso(salida, cands, fecha, rutas, abiertas)
     if CONFIG["mostrar_en_tablero"]:
         for u, s in salida.items():
             guardar_json(f'{CONFIG["tablero_datos"]}\\{fecha}-{u}.json', s)
@@ -83,7 +83,7 @@ def deducir(fecha):
 
 CONF_NUM = {"alta": 0.9, "media": 0.6, "revisar": 0.5, "baja": 0.3}
 
-def hr_en_curso(salida, cands, fecha):
+def hr_en_curso(salida, cands, fecha, rutas=None, abiertas=None):
     """Para la tabla "Distribución en vivo" del tablero: HR en curso por cisterna según
     el plan del mail (Tomás LIN / Daniel LOX) y según el recorrido."""
     unidades = {}
@@ -112,60 +112,76 @@ def hr_en_curso(salida, cands, fecha):
         unidades[unidad] = {"hr": p["hr"], "fuente": fuente, "confianza": CONF_NUM.get(p["confianza"], 0.3),
                             "clientes": [r["clientes"][k] for k in sorted(r["clientes"], key=int)],
                             "visitados": vis, "producto": r.get("producto"), "detalle": det}
+    for unidad, (hr, desde_txt) in (abiertas or {}).items():
+        # sin plan para hoy pero con una HR que todavía no volvió a Acindar (ej. 574 volviendo de Tucumán)
+        if unidad in unidades or hr not in (rutas or {}): continue
+        r = rutas[hr]
+        unidades[unidad] = {"hr": hr, "fuente": "recorrido", "confianza": 0.6,
+                            "clientes": [r["clientes"][k] for k in sorted(r["clientes"], key=int)],
+                            "visitados": [], "producto": r.get("producto"),
+                            "detalle": f"En curso desde {desde_txt}: todavía no volvió a Planta Acindar"}
     destino = CONFIG.get("hr_en_curso", r"C:\jornada-bot\tablero\datos\meta\hr_en_curso.json")
     guardar_json(destino, {"generado": datetime.now(AR).isoformat(timespec="seconds"), "fecha": fecha,
                            "unidades": dict(sorted(unidades.items()))})
 
 def hr_cerradas(rutas, fecha):
-    """HR que ya terminaron y cuyo PDF todavía no está en hr.db, para Novedades del tablero
-    ("falta recibirla"). Terminada = ya no tiene días en el plan, y además la unidad siguió
-    con otra HR o hay mails más nuevos del mismo producto que ya no la nombran."""
-    import os, sqlite3
+    """HR terminadas cuyo PDF todavía no está en hr.db, para Novedades del tablero
+    ("falta recibirla"). Regla del usuario (03/11/2026): el mail NO cierra una HR; se cierra
+    solo cuando la cisterna, después de pasar por clientes, vuelve a Planta Acindar."""
+    import sqlite3
     try:
         con = sqlite3.connect(CONFIG["hr_db"])
         recibidas = {str(h)[-6:] for (h,) in con.execute("select hr from hr")}
         con.close()
     except Exception:
-        return                                       # sin base no se puede decir qué falta
+        return {}                                    # sin base no se puede decir qué falta
+    planta = plantas(leer_json(ruta("clientes.json"), {}))
     desde = CONFIG.get("cerradas_desde", "2026-10-28")
-    por_unidad = {}                                  # unidad -> {hr: [días]}
-    for r in rutas.values():
-        # si el plan pasó la HR de una unidad a otra, vale la del mail más nuevo
-        ult = max(r["dias"].items(), key=lambda kv: (kv[1].get("mail") or "", kv[0]))[1]["cisterna"]
-        por_unidad.setdefault(ult, {})[r["hr"]] = sorted(r["dias"])
-    horizonte = {}                                   # último día que cubre algún mail, por producto
-    for r in rutas.values():
-        k = r.get("producto"); horizonte[k] = max(horizonte.get(k, ""), max(r["dias"]))
-    pred = {}
-    carpeta = ruta("predicciones")
-    for f in os.listdir(carpeta) if os.path.isdir(carpeta) else []:
-        for u, p in leer_json(os.path.join(carpeta, f), {}).items():
-            if p.get("visitados") or p.get("carga"):
-                pred.setdefault((u, p["hr"]), []).append(f[:-5])
-    lista = []
-    for unidad, hrs in por_unidad.items():
-        tramos = sorted((ds[0], int(hr), ds[-1], hr) for hr, ds in hrs.items())
-        tramos = [(a, c, d) for a, _, c, d in tramos]
-        for i, (ini, fin, hr) in enumerate(tramos):
-            # cerrada = ya no tiene días en el plan (hoy puede seguir con clientes
-            # aunque la siguiente HR arranque hoy con la carga en planta)
-            if fin < desde or hr in recibidas or fin >= fecha:
-                continue
-            siguiente = tramos[i + 1] if i + 1 < len(tramos) and tramos[i + 1][0] <= fecha else None
-            if not siguiente and fin >= horizonte.get(rutas[hr].get("producto"), ""):
-                continue                             # el plan no llega más allá: no se sabe si terminó
-            if siguiente:
-                motivo = f"La {unidad} siguió con la HR {siguiente[2]} (desde {siguiente[0][8:10]}/{siguiente[0][5:7]})"
-            else:
-                motivo = f"Último día en el plan: {fin[8:10]}/{fin[5:7]}"
-            lista.append({"hr": hr, "cisterna": unidad, "cerrada": fin,
-                          "motivo": motivo, "producto": rutas[hr].get("producto"),
-                          "evidencia": "recorrido" if (unidad, hr) in pred else "plan",
-                          "nota": None if (unidad, hr) in pred else "Sin recorrido que lo confirme: puede estar anulada"})
+    lista, abiertas = [], {}
+    if planta:
+        en_planta = lambda p: any(km((p["lat"], p["lng"]), u) <= CONFIG["radio_cliente_km"] for u in planta)
+        por_unidad = {}
+        for r in rutas.values():
+            # si el plan pasó la HR de una unidad a otra, vale la del mail más nuevo
+            ult = max(r["dias"].items(), key=lambda kv: (kv[1].get("mail") or "", kv[0]))[1]["cisterna"]
+            por_unidad.setdefault(ult, []).append((min(r["dias"]), int(r["hr"]), r["hr"]))
+        cache = {}
+        def paradas_unidad(unidad, dia):
+            if dia not in cache: cache[dia] = paradas_del_dia(dia)
+            ps = cache[dia].get(unidad)
+            return ps if isinstance(ps, list) else []
+        for unidad, hrs in por_unidad.items():
+            hrs.sort()
+            libre_desde = 0                          # la HR siguiente empieza donde cerró la anterior
+            for ini, _, hr in hrs:
+                if ini < desde or ini > fecha:
+                    continue
+                d0 = date.fromisoformat(ini)
+                dias = [(d0 + timedelta(days=i)).isoformat() for i in range(10)]
+                ps = [p for d in dias if d <= fecha for p in paradas_unidad(unidad, d)]
+                ps = [p for p in sorted(ps, key=lambda p: p["ini"]) if p["ini"] >= libre_desde]
+                clientes, cierre = 0, None
+                for p in ps:
+                    if en_planta(p):
+                        if clientes:
+                            cierre = p; break
+                    else:
+                        clientes += 1
+                if not cierre:
+                    abiertas[unidad] = (hr, f"{ini[8:10]}/{ini[5:7]}")
+                    break                            # sigue en curso: las siguientes HR todavía no empezaron
+                libre_desde = cierre["ini"]
+                if hr in recibidas:
+                    continue
+                cuando = datetime.fromtimestamp(cierre["ini"], AR)
+                lista.append({"hr": hr, "cisterna": unidad, "cerrada": cuando.date().isoformat(),
+                              "motivo": f"Volvió a Planta Acindar el {cuando:%d/%m %H:%M} después de {clientes} parada(s) en clientes",
+                              "producto": rutas[hr].get("producto"), "evidencia": "recorrido", "nota": None})
     lista.sort(key=lambda x: (x["cerrada"], x["cisterna"]))
     guardar_json(CONFIG.get("hr_cerradas", r"C:\jornada-bot\tablero\datos\meta\hr_cerradas.json"),
                  {"generado": datetime.now(AR).isoformat(timespec="seconds"), "fecha": fecha,
                   "faltan_recibir": lista})
+    return abiertas
 
 if __name__ == "__main__":
     fecha = sys.argv[1] if len(sys.argv) > 1 else datetime.now(AR).date().isoformat()
