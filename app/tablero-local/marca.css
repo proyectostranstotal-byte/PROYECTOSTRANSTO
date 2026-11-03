@@ -64,3 +64,5 @@ input,select{border-radius:3px}
 .asig-dlg h3{margin:0;font-family:var(--f-display)}
 .asig-dlg label{display:grid;gap:4px;font-size:.88rem}
 .vivo .asig-b{font-size:.75rem;padding:2px 8px}
+/* "Hacé esto hoy" sacado a pedido del usuario (03/11/2026) */
+section.hoy{display:none!important}
