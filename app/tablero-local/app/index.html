@@ -372,10 +372,14 @@ const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","
 const fmtFecha=iso=>{if(!iso)return"";const [y,m,d]=iso.slice(0,10).split("-");return d+"/"+m};
 const INICIO_INCENTIVOS="2026-11-01";
 const EXCESOS_DESDE="2026-11-01";
+function armarFaltas(){
+  const auto=excesos.filter(e=>e.requiere!==false&&e.resultado!=="justificado").map(e=>({id:"ex:"+e.id,fecha:e.fecha,chofer:e.chofer||"Sin chofer",falta:[e.tipo,e.detalle].filter(Boolean).join(": "),avisado:!!e.avisado,avisado_fecha:e.avisado_fecha||"",auto:true}));
+  faltas=faltasMan.concat(auto);
+}
 const META_AUD=[4,5];
 
 $("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
-let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],audSug={},mesDoc=null,db=null;
+let areas=[],tareas=[],meta={},salud={},flota={},excesos=[],faltas=[],faltasMan=[],audSug={},mesDoc=null,db=null;
 let mesSel=mesDe(new Date()),unsubMes=null;
 const NEXT={pendiente:"en_curso",en_curso:"hecha",hecha:"pendiente"};
 
@@ -477,7 +481,7 @@ function renderOb(){
     ${chs.length?`<div class="lista" style="display:grid;gap:10px">${chs.map(c=>`<div class="cho"><div class="cho-h"><span>${esc(c)}</span><span class="sub">${porCh[c].length} falta${porCh[c].length>1?"s":""}</span></div>${porCh[c].sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||"")).map(f=>`<div class="falta ${f.avisado?"ok":""}"><span>${esc(fmtFecha(f.fecha))} · ${esc(f.falta)}</span><button type="button" data-av="${esc(f.id)}">${f.avisado?"Avisado ✓":"Marcar avisado"}</button></div>`).join("")}</div>`).join("")}</div>`:'<p class="sub">Sin faltas cargadas.</p>'}
     <details class="mas"><summary>Cargar una falta</summary><div class="formx">
       <div class="row"><input type="date" id="fa-f" value="${h}" aria-label="Fecha"><input id="fa-ch" list="dl-ch" placeholder="Chofer" aria-label="Chofer"></div>
-      <div class="row"><input id="fa-d" placeholder="Falta (ej. exceso de velocidad)" aria-label="Falta"><button class="btn" type="button" id="fa-add">Agregar</button></div>
+      <div class="row"><select id="fa-tipo" aria-label="Tipo de falta"><option>Multa</option><option>Siniestro</option><option>Documentación</option><option>Checklist</option><option>Otro</option></select><input id="fa-d" placeholder="Detalle (ej. multa en Ruta 34)" aria-label="Detalle"><button class="btn" type="button" id="fa-add">Agregar</button></div>
     </div></details>`)]);
 
   // 4 y 5. HR
@@ -536,8 +540,8 @@ $("obs").addEventListener("click",async e=>{
     }catch(err){console.warn(err);b.disabled=false}return}
   if(b.dataset.audSug){const k=b.dataset.audSug,u=(audSug.sugeridas||[]).find(x=>(x.tractor||x.cis)===k);if(!u)return;b.disabled=true;await guardarMes({auditorias:[...(M().auditorias||[]),{cis:u.cis||"",tractor:u.tractor||"",fecha:hoyISO()}]});return}
   if(b.id==="ex-add"){const d={fecha:$("ex-f").value||hoyISO(),chofer:$("ex-ch").value.trim(),cis:$("ex-cis").value,tipo:$("ex-t").value,detalle:$("ex-d").value.trim(),comentario:"",origen:"manual"};if(!d.chofer&&!d.cis)return;b.disabled=true;try{await db.collection("excesos").add(d)}catch(err){console.warn(err);b.disabled=false}return}
-  if(b.dataset.av){const f=faltas.find(x=>x.id===b.dataset.av);if(!f)return;b.disabled=true;try{await db.doc("faltas/"+f.id).update({avisado:!f.avisado,avisado_fecha:f.avisado?"":hoyISO()})}catch(err){console.warn(err);b.disabled=false}return}
-  if(b.id==="fa-add"){const d={fecha:$("fa-f").value||hoyISO(),chofer:$("fa-ch").value.trim(),falta:$("fa-d").value.trim(),avisado:false};if(!d.chofer||!d.falta)return;b.disabled=true;try{await db.collection("faltas").add(d)}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.dataset.av){const f=faltas.find(x=>x.id===b.dataset.av);if(!f)return;b.disabled=true;try{await db.doc(f.auto?"excesos/"+f.id.slice(3):"faltas/"+f.id).update({avisado:!f.avisado,avisado_fecha:f.avisado?"":hoyISO()})}catch(err){console.warn(err);b.disabled=false}return}
+  if(b.id==="fa-add"){const d={fecha:$("fa-f").value||hoyISO(),chofer:$("fa-ch").value.trim(),tipo:$("fa-tipo").value,falta:[$("fa-tipo").value,$("fa-d").value.trim()].filter(Boolean).join(": "),avisado:false};if(!d.chofer||!d.falta)return;b.disabled=true;try{await db.collection("faltas").add(d)}catch(err){console.warn(err);b.disabled=false}return}
   if(b.dataset.hr){const k=b.dataset.hr;b.disabled=true;await guardarMes({[k]:{cargadas:+$(k+"-c").value||0,total:+$(k+"-t").value||0}});b.disabled=false;return}
   if(b.id==="sv-ok"){b.disabled=true;await guardarMes({seguridad:{respondido:true,fecha:hoyISO()}});return}
   if(b.id==="sv-undo"){b.disabled=true;await guardarMes({seguridad:{respondido:false,fecha:""}});return}
@@ -803,8 +807,8 @@ setInterval(()=>{render()},5*60*1000);
   const err=e=>console.warn(e);
   db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
   db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
-  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);renderOb();renderVivo()},err);
-  db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
+  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb();renderVivo()},err);
+  db.collection("faltas").onSnapshot(s=>{faltasMan=s.docs.map(d=>({id:d.id,...d.data()})).filter(f=>!f.exceso_id&&(f.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb()},err);
   db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
   db.doc("meta/auditorias").onSnapshot(s=>{audSug=s.exists?s.data():{};renderOb()},err);
   db.doc("meta/salud").onSnapshot(s=>{salud=s.exists?s.data():{};render()},err);

@@ -67,6 +67,21 @@ cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8")
 cambiar('db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));', 'db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);')
 cambiar('const INICIO_INCENTIVOS="2026-11-01";', 'const INICIO_INCENTIVOS="2026-11-01";\nconst EXCESOS_DESDE="2026-11-01";')
 
+# Incentivos: cada exceso desde noviembre que requiere justificación y no fue justificado es una falta automática
+# (el "avisado" se guarda en el mismo exceso). Las faltas cargadas a mano (multas, siniestros, etc.) siguen en "faltas".
+cambiar('excesos=[],faltas=[],', 'excesos=[],faltas=[],faltasMan=[],')
+cambiar('db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);',
+        'db.collection("faltas").onSnapshot(s=>{faltasMan=s.docs.map(d=>({id:d.id,...d.data()})).filter(f=>!f.exceso_id&&(f.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb()},err);')
+cambiar('.filter(e=>(e.fecha||"")>=EXCESOS_DESDE);', '.filter(e=>(e.fecha||"")>=EXCESOS_DESDE);armarFaltas();')
+cambiar('const EXCESOS_DESDE="2026-11-01";', '''const EXCESOS_DESDE="2026-11-01";
+function armarFaltas(){
+  const auto=excesos.filter(e=>e.requiere!==false&&e.resultado!=="justificado").map(e=>({id:"ex:"+e.id,fecha:e.fecha,chofer:e.chofer||"Sin chofer",falta:[e.tipo,e.detalle].filter(Boolean).join(": "),avisado:!!e.avisado,avisado_fecha:e.avisado_fecha||"",auto:true}));
+  faltas=faltasMan.concat(auto);
+}''')
+cambiar('try{await db.doc("faltas/"+f.id).update', 'try{await db.doc(f.auto?"excesos/"+f.id.slice(3):"faltas/"+f.id).update')
+cambiar('falta:$("fa-d").value.trim(),avisado:false}', 'tipo:$("fa-tipo").value,falta:[$("fa-tipo").value,$("fa-d").value.trim()].filter(Boolean).join(": "),avisado:false}')
+cambiar('<input id="fa-d" placeholder="Falta (ej. exceso de velocidad)" aria-label="Falta">', '<select id="fa-tipo" aria-label="Tipo de falta"><option>Multa</option><option>Siniestro</option><option>Documentación</option><option>Checklist</option><option>Otro</option></select><input id="fa-d" placeholder="Detalle (ej. multa en Ruta 34)" aria-label="Detalle">')
+
 # Script de asignar chofer al final
 CHAT_JS = (AQUI / "asignar.js").read_text(encoding="utf8")
 i = src.rindex("</script>")
