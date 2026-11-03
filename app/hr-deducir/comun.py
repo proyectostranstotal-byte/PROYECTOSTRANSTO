@@ -5,7 +5,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 CONFIG = {
     "transdat_url": "https://clientes.transdat.com.ar",
     "transdat_credenciales": r"C:\ExcesosVelocidad\transdat.json",   # las mismas que usa el panel
-    "transdat_historial": "/v1/objects/{id}/history?from={desde}&to={hasta}",  # A CONFIRMAR en la PC
+    "transdat_historial": "/v1/objects/{object}/report?_v=next&from={desde}&to={hasta}&type=tracks&objType={type}&velmax=80&mins=0",
     "hr_db": r"C:\jornada-bot\hr.db",
     "base": [-32.8639, -60.7676], "radio_base_km": 1.0,
     "parada_min": 15, "vel_parada": 3, "radio_cliente_km": 2.0, "radio_aprender_km": 1.0,

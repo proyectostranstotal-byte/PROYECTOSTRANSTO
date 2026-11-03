@@ -1,8 +1,8 @@
 """Recorrido de cada cisterna desde Transdat (NO Wialon: decisión del usuario)
 y detección de paradas. Sin dependencias.
 Transdat: POST /auth {user, pass} -> token; GET /v1/objects/ -> unidades (o.gps.*).
-El historial de posiciones se pide a CONFIG["transdat_historial"] (plantilla con
-{id}, {desde}, {hasta} en epoch s); confirmar la ruta real en la PC."""
+Recorrido: GET /v1/objects/{object}/report?_v=next&type=tracks (como transdat.js y
+descargar_transdat.js); la respuesta trae .details[] con date (epoch s), lat, lng, speed."""
 import json, re, time, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 from comun import CONFIG, km, ruta, leer_json, guardar_json
@@ -27,26 +27,24 @@ class Transdat:
         return self
     def __exit__(self, *a): pass
     def unidades(self):
-        """{'561': id_transdat, ...} por los 3 primeros dígitos del nombre."""
+        """{'561': (object, type), ...} por los 3 primeros dígitos del nombre (como transdat.js)."""
         objs = _get(self.url + "/v1/objects/", self.token)
         if isinstance(objs, dict): objs = objs.get("objects") or objs.get("data") or list(objs.values())
         out = {}
         for o in objs:
             m = re.match(r"^\s*(\d{3})", str(o.get("name") or o.get("nombre") or o.get("alias") or ""))
-            if m: out[m.group(1)] = o.get("id") or o.get("_id")
+            if m: out[m.group(1)] = (o.get("object"), o.get("type"))
         return out
     def posiciones(self, uid, desde, hasta):
-        url = self.url + CONFIG["transdat_historial"].format(id=uid, desde=int(desde), hasta=int(hasta))
+        iso = lambda t: datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        obj, tipo = uid
+        url = self.url + CONFIG["transdat_historial"].format(
+            object=urllib.parse.quote(str(obj)), type=urllib.parse.quote(str(tipo)),
+            desde=urllib.parse.quote(iso(desde)), hasta=urllib.parse.quote(iso(hasta)))
         d = _get(url, self.token)
-        if isinstance(d, dict): d = d.get("positions") or d.get("data") or d.get("items") or []
-        out = []
-        for p in d:
-            g = p.get("gps", p)
-            t, lat, lng = g.get("date") or g.get("t") or g.get("time"), g.get("lat"), g.get("lng") or g.get("lon")
-            if t and lat and lng:
-                out.append((float(t), float(lat), float(lng), float(g.get("speed") or g.get("s") or 0)))
+        out = [(float(p["date"]), float(p["lat"]), float(p["lng"]), float(p.get("speed") or 0))
+               for p in (d.get("details") or []) if p.get("date") and p.get("lat") and p.get("lng")]
         return sorted(out)
-
 
 def paradas(pos):
     """Detenciones de parada_min o más, fuera de la base. [{ini, fin, min, lat, lng}]"""
