@@ -12,7 +12,8 @@ RE_SEP = re.compile(r"^_{10,}(\s+_{10,})+\s*$")
 def fecha_iso(m):
     return datetime(2000 + int(m.group(3)), MESES[m.group(2)], int(m.group(1))).date().isoformat()
 
-def leer(texto):
+def leer(texto, producto=None):
+    """producto: "LOX" o "LIN" según el asunto del mail (los LOX dicen "LOX - TTT ..." / "LOX - SEMIS TTT ...")."""
     lineas = texto.replace("\r", "").split("\n")
     fechas_pos, cols = [], []          # posición de cada fecha / inicio de cada columna
     plan, unidad, celdas = [], None, {}
@@ -56,9 +57,9 @@ def leer(texto):
     cerrar()
     for c in plan:
         t = " ".join(x["texto"] for x in c["clientes"])
-        c["producto"] = "LIN" if re.search(r"-\s*L(IN)?\b|-LIN", t) else None
+        c["producto"] = producto or ("LOX" if re.search(r"-\s*LOX\b", t) else None) or ("LIN" if re.search(r"-\s*L(IN)?\b|-LIN", t) else None)
         for x in c["clientes"]:
-            x["nombre"] = re.sub(r"\s*-\s*(LIN.*|L|LIN A)?\s*$", "", x["texto"]).strip(" -")
+            x["nombre"] = re.sub(r"\s*-\s*(LIN.*|LOX.*|L|LO|LIN A)?\s*$", "", x["texto"]).strip(" -")
     return plan
 
 def juntar(rutas, plan, recibido):

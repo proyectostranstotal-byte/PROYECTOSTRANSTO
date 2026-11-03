@@ -1,0 +1,20 @@
+Semi \                   29-OCT-26             30-OCT-26             31-OCT-26             01-NOV-26             02-NOV-26
+___________________ ___________________   ___________________   ___________________   ___________________   ___________________
+TTT
+547                 |HR: 0000-00373498                                                |HR: 0000-00373785    |HR: 0000-00373785
+A DESIGNAR          |Continuación ...                                                 |Planta Acindar       |Continuación ...
+                    |                                                                 |                     |
+                    |5.SAN FORMOSA - L                                                |1.ACINDAR TREN1 -    |3.INPROCIL
+                    |7.CLI MEPROA                                                     |2.SIDERAR TUNDISH
+                    |8.SUC.RESISTENCIA
+___________________ ___________________   ___________________   ___________________   ___________________   ___________________
+TTT
+613                 |HR: 0000-00373682    |HR: 0000-00373709    |HR: 0000-00373726    |HR: 0000-00373727
+A DESIGNAR          |Planta Acindar       |Continuación ...     |Continuación ...     |Continuación ...
+                    |                     |                     |                     |
+                    |1.UNITAS_EX_LAPRI    |1.CLI PERGAMINO-L    |1.HOSP. CARMEN DE    |1.HOSP GUALEGUAY
+                    |2.ICR INST CARDIO    |2.PAMI I - LOX       |2.HOSP ARECO S.AN    |2.C M SAN LUCAS G
+                         ___________________
+                    |HR: 0000-00373709    |HR: 0000-00373726    |HR: 0000-00373727
+                    |Planta Acindar       |Planta Acindar       |Planta Acindar
+___________________ ___________________   ___________________   ___________________   ___________________   ___________________
