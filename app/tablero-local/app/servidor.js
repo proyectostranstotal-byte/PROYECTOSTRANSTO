@@ -257,4 +257,6 @@ fs.watchFile(__filename, { interval: 5000 }, () => {
   try { puente && puente.kill(); } catch { }
   process.exit(3);
 });
+// Si se actualiza el puente, se lo cierra y se vuelve a lanzar solo (ver arrancarPuente).
+fs.watchFile(PUENTE, { interval: 5000 }, () => { log("puente.js cambió: lo reinicio."); try { puente && puente.kill(); } catch { } });
 process.on("uncaughtException", e => log("Error no esperado:", e.stack || e.message));
