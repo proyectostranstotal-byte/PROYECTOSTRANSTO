@@ -175,7 +175,12 @@ function cuerpo(req) {
     req.on("error", mal);
   });
 }
-const esEstaPC = req => ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
+// "Esta PC" = cualquier dirección propia (sirve tanto localhost como http://NDIFABIO:8090 abierto en la misma PC).
+function esEstaPC(req) {
+  const ip = String(req.socket.remoteAddress || "").replace(/^::ffff:/, "");
+  if (ip === "127.0.0.1" || ip === "::1") return true;
+  return Object.values(require("os").networkInterfaces()).flat().some(i => i && i.address === ip);
+}
 
 async function manejar(req, res) {
   const url = new URL(req.url, "http://x");
