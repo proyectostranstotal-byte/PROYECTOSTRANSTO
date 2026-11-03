@@ -18,3 +18,7 @@ Tareas de Windows (`crear-tareas.ps1`): mails cada hora 14:10–20:10; recorrido
 Log: `C:\jornada-bot\logs\hr-deducir_AAAAMMDD.log`.
 
 Una ubicación se puede fijar a mano en `clientes.json` con `"fijo": true` (aprender no la toca).
+
+Nota (03/11/2026): la copia de la PC tiene su propia versión de satelital.py y en config.json
+"transdat_historial" con {id} y {tipo}. La del repo usa {object} y {type}: si se reemplaza
+satelital.py por la del repo, borrar "transdat_historial" de config.json.

@@ -72,6 +72,7 @@ def aprender():
                     votos[clave(clientes[str(o)])] += [(p["lat"], p["lng"], hr, 1) for p in propias]
     catalogo = leer_json(ruta("clientes.json"), {})
     for nombre, vs in votos.items():
+        if not vs: continue                 # cliente sin paradas propias
         g = agrupar(vs, radio)
         top = g[0]
         claro = top[2] >= 2 and (len(g) == 1 or top[2] > g[1][2])

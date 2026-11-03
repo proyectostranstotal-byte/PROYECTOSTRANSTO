@@ -25,7 +25,7 @@ def leer(texto, producto=None):
                 plan.append(c)
     for ln in lineas:
         fs = list(RE_FECHA.finditer(ln))
-        if len(fs) >= 2:
+        if fs and (len(fs) >= 2 or not fechas_pos or "Semi" in ln or ln.strip() == fs[0].group(0)):
             fechas_pos = [(m.start(), fecha_iso(m)) for m in fs]
             continue
         if RE_SEP.match(ln):            # separador entre unidades
@@ -38,7 +38,7 @@ def leer(texto, producto=None):
             continue
         for p in [i for i, ch in enumerate(ln) if ch == "|"]:
             col = min(range(len(cols)), key=lambda k: abs(cols[k] - p))
-            txt = ln[p + 1:].split("|")[0].strip()
+            txt = re.sub(r"\s*_{5,}.*$", "", ln[p + 1:].split("|")[0]).strip()
             if txt.startswith("HR:"):
                 nro = re.sub(r"\D", "", txt)[-6:]
                 n = sum(1 for k in celdas if k[0] == col)
