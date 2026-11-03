@@ -279,6 +279,10 @@ input,select{border-radius:3px}
 .vivo .asig-b{font-size:.75rem;padding:2px 8px}
 /* "Hacé esto hoy" sacado a pedido del usuario (03/11/2026) */
 section.hoy{display:none!important}
+.vivo td.hrc{white-space:normal;min-width:120px;font-size:.84rem}
+.vivo td.hrc b{font-family:var(--f-mono);font-weight:700}
+.conf{font:600 .65rem var(--f-body);text-transform:uppercase;letter-spacing:.05em;padding:1px 5px;border:1px solid currentColor;border-radius:3px}
+.conf.c-alta{color:var(--ok)}.conf.c-media{color:var(--accent)}.conf.c-baja{color:var(--muted)}.conf.c-revisar{color:var(--bad)}
 </style>
 <script src="local.js"></script>
 <script src="leaflet.js" async onload="window.__leafletOk&&window.__leafletOk()"></script>
@@ -301,7 +305,7 @@ section.hoy{display:none!important}
       <div style="display:grid;gap:10px;min-width:0">
         <div class="mapa" id="mapa" role="region" aria-label="Mapa de unidades"></div>
         <p class="sub" id="mapa-nota" hidden></p>
-        <div class="tw"><table class="vivo"><thead><tr><th>Cisterna</th><th>Estado</th><th>Chofer</th><th>Vel.</th><th>Reporte</th><th>Dónde</th></tr></thead><tbody id="vivo-t"><tr><td colspan="6" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
+        <div class="tw"><table class="vivo"><thead><tr><th>Cisterna</th><th>Estado</th><th>Chofer</th><th>HR</th><th>Vel.</th><th>Reporte</th><th>Dónde</th></tr></thead><tbody id="vivo-t"><tr><td colspan="7" class="vacio">Sin datos todavía.</td></tr></tbody></table></div>
       </div>
       <div class="panel-lat">
         <div class="caja"><h3>Novedades de hoy</h3><ul class="nov" id="nov"><li class="vacio">Sin novedades todavía.</li></ul></div>
@@ -709,6 +713,7 @@ function renderAlertas(){
     (f.unidades||[]).forEach(u=>{const a=alertaDe(u);if(a)out.push({...a,cis:u.cis})});
   }
   if(vivo.gpsErr)out.push({n:"bad",t:"El GPS (Transdat) no responde",d:"La PC y el puente andan bien; falla el servicio de Transdat ("+vivo.gpsErr+")."+(f?" Las posiciones son de hace "+edad(Math.round((Date.now()-new Date(f.generado))/6e4))+".":"")});
+  (window.hrCerradas||[]).forEach(c=>out.push({n:"warn",t:`HR ${c.hr} cerrada: falta recibirla`,d:[c.cisterna?"Cisterna "+c.cisterna:"",c.producto,c.motivo,c.nota].filter(Boolean).join(" · "),cis:c.cisterna||""}));
   (vivo.bots?.items||[]).filter(b=>b.estado==="fail"||b.estado==="warn").forEach(b=>out.push({n:b.estado==="fail"?"bad":"warn",t:b.nombre,d:b.detalle}));
   out.sort((a,b)=>(a.n==="bad"?0:1)-(b.n==="bad"?0:1));
   $("al-ts").textContent=out.length?`${out.filter(a=>a.n==="bad").length} graves · ${out.filter(a=>a.n==="warn").length} a revisar`:"";
@@ -733,7 +738,7 @@ function renderVivo(){
   $("vivo-kv").innerHTML=us.length?`<button type="button" data-est="" aria-pressed="${!filtroEst}"><b>${us.length}</b>todas</button>`+Object.keys(EST).map(k=>`<button type="button" class="est-${k}" data-est="${k}" aria-pressed="${filtroEst===k}"><b>${cnt[k]||0}</b>${EST[k]}</button>`).join(""):"";
   const vis=us.filter(u=>!filtroEst||u.estado===filtroEst);
   const orden={en_viaje:0,detenida:1,en_base:2,sin_senal:3};
-  $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">('+(u.chofer_checklist?'checklist':'a mano')+')</span>':''):(window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(u.cis)}">Asignar</button>`:'<span class="sub">—</span>')}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
+  $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">('+(u.chofer_checklist?'checklist':'a mano')+')</span>':''):(window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(u.cis)}">Asignar</button>`:'<span class="sub">—</span>')}</td><td class="hrc">${window.hrCelda?hrCelda(u.cis):""}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="7" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
   if(f)dibujarMapa(f);else iniciarMapa();
   renderAlertas();
 
@@ -851,6 +856,43 @@ setInterval(()=>{render()},5*60*1000);
     }catch(err){$("asig-err").hidden=false;$("asig-err").textContent="No se pudo: "+err.message}
     $("asig-ok").disabled=false;
   });
+})();
+
+/* ---------- HR en curso de cada cisterna (hilo hr-deducir: plan de los mails de Daniel/LOX y Tomás/LIN + recorrido de Transdat), solo app local ---------- */
+let hrHoy={};
+const hrConf=c=>typeof c==="number"?(c>=0.85?"alta":c>=0.55?"media":c>=0.45?"revisar":"baja"):(c||"baja");
+function hrNormalizar(meta,pred){
+  const hoy=new Date(Date.now()-3*3600e3).toISOString().slice(0,10),r={};
+  if(meta&&meta.fecha===hoy&&meta.unidades){
+    for(const[k,p]of Object.entries(meta.unidades))if(p&&p.hr)r[k]={hr:String(p.hr),conf:hrConf(p.confianza),fuente:p.fuente||"",detalle:p.detalle||"",producto:p.producto||"",clientes:p.clientes||[],visitados:(p.visitados||[]).map(v=>typeof v==="string"?v:v.cliente),otras:p.otras_plan||[]};
+    return r;
+  }
+  for(const[k,p]of Object.entries(pred||{}))if(p&&p.hr){
+    const vis=(p.visitados||[]).map(v=>typeof v==="string"?v:v.cliente);
+    r[k]={hr:String(p.hr),conf:hrConf(p.confianza),fuente:vis.length?(p.plan===p.hr?"ambos":"recorrido"):"plan",detalle:p.plan&&p.plan!==p.hr?"(el plan decía "+p.plan+")":"",producto:p.producto||"",clientes:p.clientes||[],visitados:vis,otras:(p.alternativas||[]).map(a=>typeof a==="object"?a.hr:a)};
+  }
+  return r;
+}
+function hrCelda(cis){
+  const p=hrHoy[cis];if(!p)return '<span class="sub">—</span>';
+  const fte={plan:"según plan",recorrido:"según recorrido",ambos:"plan + recorrido"}[p.fuente]||"";
+  const tip=[(p.producto?p.producto+" · ":"")+"HR "+p.hr+" · confianza "+p.conf+(fte?" · "+fte:""),p.detalle,
+    p.clientes.length?"Ruta: "+p.clientes.join(" → "):"",
+    p.visitados.length?"Ya paró en: "+p.visitados.join(", "):"Todavía sin paradas en clientes",
+    p.otras.length?"Otras HR del plan: "+p.otras.join(", "):"",
+    "Estimado: la HR se confirma cuando llega el PDF."].filter(Boolean).join("\n");
+  return `<span title="${esc(tip)}"><b>${esc(p.hr)}</b>${p.producto?` <span class="sub">${esc(p.producto)}</span>`:""} <span class="conf c-${esc(p.conf)}">${esc(p.conf)}</span><br><span class="sub">${esc(fte)}${p.visitados.length?" · ✓ "+esc(p.visitados.join(", ")):""}</span></span>`;
+}
+(()=>{
+  if(!window.TABLERO_LOCAL)return;
+  const json=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+  const leer=async()=>{
+    const[m,pred,c]=await Promise.all([json("api/doc/meta/hr_en_curso"),json("api/hr-hoy"),json("api/doc/meta/hr_cerradas")]);
+    hrHoy=hrNormalizar(m&&m.exists?m.data:null,pred);
+    window.hrCerradas=(c&&c.exists&&c.data.faltan_recibir)||[];
+    try{renderVivo();renderAlertas()}catch(e){}
+  };
+  leer();setInterval(()=>{if(!document.hidden)leer()},120000);
 })();
 
 </script>

@@ -66,3 +66,7 @@ input,select{border-radius:3px}
 .vivo .asig-b{font-size:.75rem;padding:2px 8px}
 /* "Hacé esto hoy" sacado a pedido del usuario (03/11/2026) */
 section.hoy{display:none!important}
+.vivo td.hrc{white-space:normal;min-width:120px;font-size:.84rem}
+.vivo td.hrc b{font-family:var(--f-mono);font-weight:700}
+.conf{font:600 .65rem var(--f-body);text-transform:uppercase;letter-spacing:.05em;padding:1px 5px;border:1px solid currentColor;border-radius:3px}
+.conf.c-alta{color:var(--ok)}.conf.c-media{color:var(--accent)}.conf.c-baja{color:var(--muted)}.conf.c-revisar{color:var(--bad)}

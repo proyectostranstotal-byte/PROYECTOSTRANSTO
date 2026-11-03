@@ -256,6 +256,17 @@ async function manejar(req, res) {
       return responder(res, 200, { payload });
     } catch (e) { return responder(res, 503, { error: e.message, code: e.code || "server_not_connected" }); }
   }
+  // HR probable de cada cisterna hoy (hilo hr-deducir: plan de los mails de LOX/LIN + paradas de Transdat).
+  if (tipo === "hr-hoy" && req.method === "GET") {
+    const dir = path.join(BOT, "hr-deducir");
+    const pred = leer(path.join(dir, "predicciones", fechaHoy() + ".json")) || {};
+    const rutas = leer(path.join(dir, "rutas.json")) || {};
+    for (const p of Object.values(pred)) {
+      const r = rutas[p.hr];
+      if (r) { p.producto = r.producto || ""; p.clientes = Object.entries(r.clientes || {}).sort((a, b) => a[0] - b[0]).map(([o, n]) => o + ". " + n); }
+    }
+    return responder(res, 200, pred);
+  }
   if (tipo === "choferes" && req.method === "GET") return responder(res, 200, listaChoferes());
   if (tipo === "asignar" && req.method === "POST") {
     if (!esEstaPC(req)) return responder(res, 403, { error: "La asignación de choferes se hace desde la PC NDIFABIO." });

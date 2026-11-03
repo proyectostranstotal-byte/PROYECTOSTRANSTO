@@ -82,8 +82,18 @@ cambiar('try{await db.doc("faltas/"+f.id).update', 'try{await db.doc(f.auto?"exc
 cambiar('falta:$("fa-d").value.trim(),avisado:false}', 'tipo:$("fa-tipo").value,falta:[$("fa-tipo").value,$("fa-d").value.trim()].filter(Boolean).join(": "),avisado:false}')
 cambiar('<input id="fa-d" placeholder="Falta (ej. exceso de velocidad)" aria-label="Falta">', '<select id="fa-tipo" aria-label="Tipo de falta"><option>Multa</option><option>Siniestro</option><option>Documentación</option><option>Checklist</option><option>Otro</option></select><input id="fa-d" placeholder="Detalle (ej. multa en Ruta 34)" aria-label="Detalle">')
 
+# HR probable (hr-deducir) en la tabla de Distribución en vivo
+cambiar('<th>Chofer</th><th>Vel.</th><th>Reporte</th>', '<th>Chofer</th><th>HR</th><th>Vel.</th><th>Reporte</th>')
+cambiar('<td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td>', '<td class="hrc">${window.hrCelda?hrCelda(u.cis):""}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td>')
+src = src.replace('<tr><td colspan="6" class="vacio">Sin datos todavía.</td></tr></tbody></table>', '<tr><td colspan="7" class="vacio">Sin datos todavía.</td></tr></tbody></table>')
+cambiar('`<tr><td colspan="6" class="vacio">${f?', '`<tr><td colspan="7" class="vacio">${f?')
+
+# HR cerradas sin PDF (hr-deducir escribe datos\meta\hr_cerradas.json; desaparecen solas cuando el PDF entra a hr.db): aviso para pedírsela al chofer
+cambiar('  (vivo.bots?.items||[]).filter(b=>b.estado==="fail"', '''  (window.hrCerradas||[]).forEach(c=>out.push({n:"warn",t:`HR ${c.hr} cerrada: falta recibirla`,d:[c.cisterna?"Cisterna "+c.cisterna:"",c.producto,c.motivo,c.nota].filter(Boolean).join(" · "),cis:c.cisterna||""}));
+  (vivo.bots?.items||[]).filter(b=>b.estado==="fail"''')
+
 # Script de asignar chofer al final
-CHAT_JS = (AQUI / "asignar.js").read_text(encoding="utf8")
+CHAT_JS = (AQUI / "asignar.js").read_text(encoding="utf8") + "\n" + (AQUI / "hr.js").read_text(encoding="utf8")
 i = src.rindex("</script>")
 src = src[:i] + "\n" + CHAT_JS + "\n" + src[i:]
 
