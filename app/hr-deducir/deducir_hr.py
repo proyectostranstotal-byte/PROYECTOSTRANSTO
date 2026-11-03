@@ -117,8 +117,9 @@ def hr_en_curso(salida, cands, fecha):
                            "unidades": dict(sorted(unidades.items()))})
 
 def hr_cerradas(rutas, fecha):
-    """HR que ya terminaron (la unidad empezó otra HR, o pasó su último día del plan)
-    y cuyo PDF todavía no está en hr.db: para Novedades del tablero ("falta recibirla")."""
+    """HR que ya terminaron y cuyo PDF todavía no está en hr.db, para Novedades del tablero
+    ("falta recibirla"). Terminada = ya no tiene días en el plan, y además la unidad siguió
+    con otra HR o hay mails más nuevos del mismo producto que ya no la nombran."""
     import os, sqlite3
     try:
         con = sqlite3.connect(CONFIG["hr_db"])
@@ -127,10 +128,14 @@ def hr_cerradas(rutas, fecha):
     except Exception:
         return                                       # sin base no se puede decir qué falta
     desde = CONFIG.get("cerradas_desde", "2026-10-28")
-    por_unidad = {}                                  # unidad -> [(primer_dia, ultimo_dia, hr)]
+    por_unidad = {}                                  # unidad -> {hr: [días]}
     for r in rutas.values():
-        for d, info in r["dias"].items():
-            por_unidad.setdefault(info["cisterna"], {}).setdefault(r["hr"], []).append(d)
+        # si el plan pasó la HR de una unidad a otra, vale la del mail más nuevo
+        ult = max(r["dias"].items(), key=lambda kv: (kv[1].get("mail") or "", kv[0]))[1]["cisterna"]
+        por_unidad.setdefault(ult, {})[r["hr"]] = sorted(r["dias"])
+    horizonte = {}                                   # último día que cubre algún mail, por producto
+    for r in rutas.values():
+        k = r.get("producto"); horizonte[k] = max(horizonte.get(k, ""), max(r["dias"]))
     pred = {}
     carpeta = ruta("predicciones")
     for f in os.listdir(carpeta) if os.path.isdir(carpeta) else []:
@@ -139,18 +144,21 @@ def hr_cerradas(rutas, fecha):
                 pred.setdefault((u, p["hr"]), []).append(f[:-5])
     lista = []
     for unidad, hrs in por_unidad.items():
-        # en orden de inicio (mismo día: la de número menor va primero, como en el mail)
-        tramos = sorted((min(ds), int(hr), max(ds), hr) for hr, ds in hrs.items())
+        tramos = sorted((ds[0], int(hr), ds[-1], hr) for hr, ds in hrs.items())
         tramos = [(a, c, d) for a, _, c, d in tramos]
         for i, (ini, fin, hr) in enumerate(tramos):
-            siguiente = tramos[i + 1] if i + 1 < len(tramos) and tramos[i + 1][0] <= fecha else None
-            if fin < desde or hr in recibidas or (fin >= fecha and not siguiente):
+            # cerrada = ya no tiene días en el plan (hoy puede seguir con clientes
+            # aunque la siguiente HR arranque hoy con la carga en planta)
+            if fin < desde or hr in recibidas or fin >= fecha:
                 continue
+            siguiente = tramos[i + 1] if i + 1 < len(tramos) and tramos[i + 1][0] <= fecha else None
+            if not siguiente and fin >= horizonte.get(rutas[hr].get("producto"), ""):
+                continue                             # el plan no llega más allá: no se sabe si terminó
             if siguiente:
-                motivo = f"La {unidad} empezó la HR {siguiente[2]} el {siguiente[0][8:10]}/{siguiente[0][5:7]}"
+                motivo = f"La {unidad} siguió con la HR {siguiente[2]} (desde {siguiente[0][8:10]}/{siguiente[0][5:7]})"
             else:
                 motivo = f"Último día en el plan: {fin[8:10]}/{fin[5:7]}"
-            lista.append({"hr": hr, "cisterna": unidad, "cerrada": siguiente[0] if siguiente else fin,
+            lista.append({"hr": hr, "cisterna": unidad, "cerrada": fin,
                           "motivo": motivo, "producto": rutas[hr].get("producto"),
                           "evidencia": "recorrido" if (unidad, hr) in pred else "plan",
                           "nota": None if (unidad, hr) in pred else "Sin recorrido que lo confirme: puede estar anulada"})
