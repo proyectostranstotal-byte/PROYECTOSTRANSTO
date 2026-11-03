@@ -63,3 +63,4 @@ input,select{border-radius:3px}
 .asig-dlg form{display:grid;gap:12px}
 .asig-dlg h3{margin:0;font-family:var(--f-display)}
 .asig-dlg label{display:grid;gap:4px;font-size:.88rem}
+.vivo .asig-b{font-size:.75rem;padding:2px 8px}

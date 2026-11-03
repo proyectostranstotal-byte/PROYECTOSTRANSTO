@@ -2,7 +2,7 @@
 (()=>{
   if(!window.TABLERO_LOCAL)return;
   let cisAsig="";
-  $("al").addEventListener("click",async e=>{
+  const abrir=async e=>{
     const b=e.target.closest("button[data-asig]");if(!b)return;
     e.stopPropagation();
     cisAsig=b.dataset.asig;
@@ -12,7 +12,9 @@
       const l=await r.json();$("asig-ch").innerHTML='<option value="">Elegí el chofer…</option>'+l.map(c=>`<option>${esc(c.nombre)}</option>`).join("");
     }catch(err){$("asig-ch").innerHTML="";$("asig-err").hidden=false;$("asig-err").textContent="No se pudo cargar la lista de choferes: "+err.message}
     $("asig-dlg").showModal();
-  },true);
+  };
+  $("al").addEventListener("click",abrir,true);
+  $("vivo-t").addEventListener("click",abrir,true);
   $("asig-x").addEventListener("click",()=>$("asig-dlg").close());
   $("asig-f").addEventListener("submit",async e=>{
     e.preventDefault();
