@@ -96,7 +96,7 @@ def hr_en_curso(salida, cands, fecha, rutas=None, abiertas=None):
             "detalle": "Planta Acindar (carga)" if d.get("tipo") == "carga" else "Según el plan del mail"})
         if u["hr"] != r["hr"]:
             u.setdefault("otras_plan", []).append(r["hr"])
-    rutas = {r["hr"]: r for r in cands}
+    rutas = rutas or {r["hr"]: r for r in cands}
     for unidad, p in salida.items():
         r = rutas.get(p["hr"], {"clientes": {}})
         vis = [v["cliente"] for v in p["visitados"]]
@@ -160,12 +160,14 @@ def hr_cerradas(rutas, fecha):
                 dias = [(d0 + timedelta(days=i)).isoformat() for i in range(10)]
                 ps = [p for d in dias if d <= fecha for p in paradas_unidad(unidad, d)]
                 ps = [p for p in sorted(ps, key=lambda p: p["ini"]) if p["ini"] >= libre_desde]
-                clientes, cierre = 0, None
+                # solo cuentan clientes después de cargar (las paradas previas son del viaje anterior)
+                clientes, cierre, cargo = 0, None, False
                 for p in ps:
                     if en_planta(p):
                         if clientes:
                             cierre = p; break
-                    else:
+                        cargo = True
+                    elif cargo:
                         clientes += 1
                 if not cierre:
                     abiertas[unidad] = (hr, f"{ini[8:10]}/{ini[5:7]}")
