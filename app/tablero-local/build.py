@@ -60,8 +60,14 @@ cambiar('(vivo.live?"":" · en vivo solo desde la app de Claude de la PC")', '(v
 cambiar('"Se renuevan cuando el tablero está abierto en la app de Claude de la PC."', '"Se renuevan cada 2 minutos mientras el tablero está abierto."')
 cambiar('" · los botones funcionan solo en la app de Claude de la PC"', '" · sin conexión con el puente de la PC"')
 
+# Asignar chofer desde la alerta "en movimiento sin chofer" (escribe asignaciones-manuales.json)
+cambiar('d:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`};', 'd:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`,asig:1};')
+cambiar('<span class="ad">${esc(a.d)}</span></li>', '<span class="ad">${esc(a.d)}</span>${a.asig&&window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(a.cis)}">Asignar chofer</button>`:""}</li>')
+cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''', '''<td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">(a mano)</span>':''):'<span class="sub">—</span>'}</td>''')
+cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8") + '</div>\n\n<script>')
+
 # Script del chat al final
-CHAT_JS = (AQUI / "chat.js").read_text(encoding="utf8")
+CHAT_JS = (AQUI / "chat.js").read_text(encoding="utf8") + "\n" + (AQUI / "asignar.js").read_text(encoding="utf8")
 i = src.rindex("</script>")
 src = src[:i] + "\n" + CHAT_JS + "\n" + src[i:]
 

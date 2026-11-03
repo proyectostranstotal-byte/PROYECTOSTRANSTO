@@ -68,3 +68,9 @@ input,select{border-radius:3px}
 .kv button[aria-pressed="true"] b{color:inherit}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
 :root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.al-l .asig-b{justify-self:start;margin-top:4px;font-size:.78rem;padding:3px 10px}
+.asig-dlg{border:1px solid var(--line);border-top:4px solid var(--tt-celeste);background:var(--surface);color:var(--ink);padding:18px 20px;max-width:420px;width:calc(100% - 32px)}
+.asig-dlg::backdrop{background:rgba(0,0,0,.45)}
+.asig-dlg form{display:grid;gap:12px}
+.asig-dlg h3{margin:0;font-family:var(--f-display)}
+.asig-dlg label{display:grid;gap:4px;font-size:.88rem}

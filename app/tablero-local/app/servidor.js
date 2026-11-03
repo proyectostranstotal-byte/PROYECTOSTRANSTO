@@ -31,12 +31,32 @@ const MARCA = {
 async function imagenMarca(nombre) {
   const f = path.join(DIR, "marca", nombre);
   if (fs.existsSync(f)) return fs.readFileSync(f);
-  const r = await fetch(MARCA[nombre]);
+  const r = await fetch(MARCA[nombre], { signal: AbortSignal.timeout(10000) });
   if (!r.ok) throw new Error("HTTP " + r.status);
   const b = Buffer.from(await r.arrayBuffer());
   fs.mkdirSync(path.dirname(f), { recursive: true });
   fs.writeFileSync(f, b);
   return b;
+}
+
+// Choferes asignados a mano (el mismo archivo que usan exceso-jornada.js y sin-gps.js para el reporte de jornada).
+const BOT = path.join(DIR, "..");
+const ASIGNACIONES = path.join(BOT, "asignaciones-manuales.json");
+const ESTADO_CHOFERES = path.join(BOT, "estado-choferes.json");
+const pad2 = n => String(n).padStart(2, "0");
+const fechaHoy = () => { const d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); };
+const sinAcentos = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function listaChoferes() {
+  const e = leer(ESTADO_CHOFERES) || {}, vistos = new Map();
+  for (const [code, v] of Object.entries(e)) if (v?.nombre && !vistos.has(sinAcentos(v.nombre))) vistos.set(sinAcentos(v.nombre), { nombre: v.nombre, code });
+  return [...vistos.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+// Chofer asignado a mano a una cisterna para hoy y esta hora (respeta los tramos desde/hasta).
+function choferManual(asig, cis) {
+  const tramos = (asig[fechaHoy()] || {})[cis];
+  if (!Array.isArray(tramos)) return null;
+  const d = new Date(), ahora = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  return tramos.find(t => (!t.desde || t.desde <= ahora) && (!t.hasta || ahora < t.hasta)) || null;
 }
 
 const log = (...a) => console.log(new Date().toLocaleString("es-AR"), ...a);
@@ -231,8 +251,44 @@ async function manejar(req, res) {
       const m = await rpc("tools/call", { name: c, arguments: b.args || {} });
       if (m.error) return responder(res, 502, { error: m.error.message, code: "tool_error" });
       if (m.result?.isError) return responder(res, 502, { error: m.result.content?.[0]?.text || "error", code: "tool_error" });
-      return responder(res, 200, { payload: m.result?.structuredContent ?? null });
+      const payload = m.result?.structuredContent ?? null;
+      if (c === "flota_ahora" && payload?.unidades) {
+        const asig = leer(ASIGNACIONES) || {};
+        for (const u of payload.unidades) {
+          if (u.chofer) continue;
+          const t = choferManual(asig, u.cis);
+          if (t) { u.chofer = t.nombre; u.chofer_manual = true; }
+        }
+      }
+      return responder(res, 200, { payload });
     } catch (e) { return responder(res, 503, { error: e.message, code: e.code || "server_not_connected" }); }
+  }
+  if (tipo === "choferes" && req.method === "GET") return responder(res, 200, listaChoferes());
+  if (tipo === "asignar" && req.method === "POST") {
+    if (!esEstaPC(req)) return responder(res, 403, { error: "La asignación de choferes se hace desde la PC NDIFABIO." });
+    const b = await cuerpo(req);
+    const cis = String(b.cis || "").trim(), fecha = /^\d{4}-\d{2}-\d{2}$/.test(b.fecha || "") ? b.fecha : fechaHoy();
+    const ch = listaChoferes().find(x => sinAcentos(x.nombre) === sinAcentos(b.nombre));
+    if (!/^\d{3}$/.test(cis)) return responder(res, 400, { error: "Cisterna inválida" });
+    if (!ch) return responder(res, 400, { error: "No encuentro a ese chofer en estado-choferes.json" });
+    const hora = /^\d{2}:\d{2}$/.test(b.desde || "") ? b.desde : "";
+    const asig = leer(ASIGNACIONES) || {};
+    const dia = (asig[fecha] ||= {});
+    let tramos = Array.isArray(dia[cis]) ? dia[cis] : [];
+    const tramo = { nombre: ch.nombre, code: ch.code, fuente: "tablero" };
+    if (hora && tramos.length) {
+      // Cambio de chofer a partir de una hora: el tramo anterior termina ahí.
+      tramos = tramos.filter(t => !t.desde || t.desde < hora).map(t => (!t.hasta || t.hasta > hora) ? { ...t, hasta: hora } : t);
+      tramo.desde = hora;
+      tramos.push(tramo);
+    } else tramos = [hora ? { ...tramo, desde: hora } : tramo];
+    dia[cis] = tramos;
+    try { fs.copyFileSync(ASIGNACIONES, ASIGNACIONES + ".bak"); } catch { }
+    const tmp = ASIGNACIONES + ".tmp";
+    fs.writeFileSync(tmp, JSON.stringify(asig, null, 2), "utf8");
+    fs.renameSync(tmp, ASIGNACIONES);
+    log("Asignado", ch.nombre, "a la", cis, "el", fecha, hora ? "desde " + hora : "");
+    return responder(res, 200, { ok: true, fecha, cis, tramos });
   }
   if (tipo === "ia" && req.method === "GET") return responder(res, 200, { activa: !!claveIA() });
   if (tipo === "ia" && req.method === "POST") {

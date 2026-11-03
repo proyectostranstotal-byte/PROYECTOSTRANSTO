@@ -281,6 +281,12 @@ input,select{border-radius:3px}
 .kv button[aria-pressed="true"] b{color:inherit}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
 :root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.al-l .asig-b{justify-self:start;margin-top:4px;font-size:.78rem;padding:3px 10px}
+.asig-dlg{border:1px solid var(--line);border-top:4px solid var(--tt-celeste);background:var(--surface);color:var(--ink);padding:18px 20px;max-width:420px;width:calc(100% - 32px)}
+.asig-dlg::backdrop{background:rgba(0,0,0,.45)}
+.asig-dlg form{display:grid;gap:12px}
+.asig-dlg h3{margin:0;font-family:var(--f-display)}
+.asig-dlg label{display:grid;gap:4px;font-size:.88rem}
 </style>
 <script src="local.js"></script>
 <script src="leaflet.js" async onload="window.__leafletOk&&window.__leafletOk()"></script>
@@ -369,6 +375,16 @@ input,select{border-radius:3px}
       </div>
     </details>
   </section>
+  <dialog id="asig-dlg" class="asig-dlg">
+    <form method="dialog" id="asig-f">
+      <h3 id="asig-t">Asignar chofer</h3>
+      <p class="sub">Queda en asignaciones-manuales.json: lo usa el reporte de jornada y el tablero deja de marcarla sin chofer.</p>
+      <label>Chofer <select id="asig-ch" required></select></label>
+      <label>Desde (opcional, si cambió de chofer en el día) <input type="time" id="asig-desde"></label>
+      <p class="sub" id="asig-err" hidden></p>
+      <div class="row"><button class="btn" type="submit" id="asig-ok">Guardar</button><button class="btn sec" type="button" id="asig-x">Cancelar</button></div>
+    </form>
+  </dialog>
 </div>
 
 <script>
@@ -699,7 +715,7 @@ const VIEJO_MIN=15; // la foto guardada se considera vieja pasados estos minutos
 function alertaDe(u){
   if(u.vel>VEL_MAX)return{n:"bad",t:`${u.cis} a ${u.vel} km/h`,d:`Supera ${VEL_MAX} km/h · ${u.chofer||"sin chofer logueado"}${u.dir?" · "+u.dir:""}`};
   if(u.estado==="sin_senal"||(u.estado!=="en_base"&&u.edad_min>60))return{n:"warn",t:`${u.cis} sin reportar`,d:`Último reporte hace ${edad(u.edad_min)}${u.dir?" · "+u.dir:""}`};
-  if(u.vel>5&&!u.chofer)return{n:"warn",t:`${u.cis} en movimiento sin chofer`,d:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`};
+  if(u.vel>5&&!u.chofer)return{n:"warn",t:`${u.cis} en movimiento sin chofer`,d:`Sin iButton · ${u.tractor||""} · ${u.vel} km/h`,asig:1};
   return null;
 }
 function renderAlertas(){
@@ -713,7 +729,7 @@ function renderAlertas(){
   (vivo.bots?.items||[]).filter(b=>b.estado==="fail"||b.estado==="warn").forEach(b=>out.push({n:b.estado==="fail"?"bad":"warn",t:b.nombre,d:b.detalle}));
   out.sort((a,b)=>(a.n==="bad"?0:1)-(b.n==="bad"?0:1));
   $("al-ts").textContent=out.length?`${out.filter(a=>a.n==="bad").length} graves · ${out.filter(a=>a.n==="warn").length} a revisar`:"";
-  $("al").innerHTML=!f&&!vivo.bots?'<p class="sub">Esperando datos de la flota…</p>':out.length?`<ul class="al-l">${out.map(a=>`<li class="${a.n}"${a.cis?` data-cis="${esc(a.cis)}"`:""}><span class="at">${esc(a.t)}</span><span class="ad">${esc(a.d)}</span></li>`).join("")}</ul>`:'<p class="al-ok">Sin alertas: flota y bots en orden.</p>';
+  $("al").innerHTML=!f&&!vivo.bots?'<p class="sub">Esperando datos de la flota…</p>':out.length?`<ul class="al-l">${out.map(a=>`<li class="${a.n}"${a.cis?` data-cis="${esc(a.cis)}"`:""}><span class="at">${esc(a.t)}</span><span class="ad">${esc(a.d)}</span>${a.asig&&window.TABLERO_LOCAL?`<button type="button" class="btn sec asig-b" data-asig="${esc(a.cis)}">Asignar chofer</button>`:""}</li>`).join("")}</ul>`:'<p class="al-ok">Sin alertas: flota y bots en orden.</p>';
 }
 $("al").addEventListener("click",e=>{const li=e.target.closest("li[data-cis]");if(!li)return;const q=()=>document.querySelector(`#vivo-t tr[data-cis="${CSS.escape(li.dataset.cis)}"]`);if(!q()&&filtroEst){filtroEst="";renderVivo()}q()?.click()});
 
@@ -734,7 +750,7 @@ function renderVivo(){
   $("vivo-kv").innerHTML=us.length?`<button type="button" data-est="" aria-pressed="${!filtroEst}"><b>${us.length}</b>todas</button>`+Object.keys(EST).map(k=>`<button type="button" class="est-${k}" data-est="${k}" aria-pressed="${filtroEst===k}"><b>${cnt[k]||0}</b>${EST[k]}</button>`).join(""):"";
   const vis=us.filter(u=>!filtroEst||u.estado===filtroEst);
   const orden={en_viaje:0,detenida:1,en_base:2,sin_senal:3};
-  $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
+  $("vivo-t").innerHTML=vis.length?[...vis].sort((a,b)=>orden[a.estado]-orden[b.estado]||a.cis.localeCompare(b.cis)).map(u=>`<tr data-cis="${esc(u.cis)}" class="est-${esc(u.estado)}"><td class="cis">${esc(u.cis)}<span class="sub"> ${esc(u.tractor)}</span></td><td><span class="st">${esc(EST[u.estado]||u.estado)}</span></td><td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">(a mano)</span>':''):'<span class="sub">—</span>'}</td><td>${u.vel} km/h</td><td>${esc(edad(u.edad_min))}</td><td class="dir">${esc(u.estado==="en_base"?"Base Transtotal":u.dir||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="vacio">${f?"Ninguna unidad en ese estado.":"Sin datos todavía."}</td></tr>`;
   if(f)dibujarMapa(f);else iniciarMapa();
   renderAlertas();
 
@@ -841,6 +857,34 @@ setInterval(()=>{render()},5*60*1000);
   }
   $("ia-f").addEventListener("submit",e=>{e.preventDefault();preguntar($("ia-q").value)});
   $("ia-sug").addEventListener("click",e=>{const b=e.target.closest("button");if(b)preguntar(b.textContent)});
+})();
+
+/* ---------- Asignar chofer a una cisterna sin iButton (solo app local) ---------- */
+(()=>{
+  if(!window.TABLERO_LOCAL)return;
+  let cisAsig="";
+  $("al").addEventListener("click",async e=>{
+    const b=e.target.closest("button[data-asig]");if(!b)return;
+    e.stopPropagation();
+    cisAsig=b.dataset.asig;
+    $("asig-t").textContent="Asignar chofer a la "+cisAsig;$("asig-err").hidden=true;$("asig-desde").value="";
+    try{const l=await fetch("api/choferes").then(r=>r.json());$("asig-ch").innerHTML='<option value="">Elegí el chofer…</option>'+l.map(c=>`<option>${esc(c.nombre)}</option>`).join("")}catch(err){}
+    $("asig-dlg").showModal();
+  },true);
+  $("asig-x").addEventListener("click",()=>$("asig-dlg").close());
+  $("asig-f").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const nombre=$("asig-ch").value;if(!nombre)return;
+    $("asig-ok").disabled=true;
+    try{
+      const r=await fetch("api/asignar",{method:"POST",headers:{"Content-Type":"application/json","X-Tablero":"1"},body:JSON.stringify({cis:cisAsig,nombre,desde:$("asig-desde").value,fecha:hoyISO()})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||r.statusText);
+      $("asig-dlg").close();
+      leerVivo("flota","flota_ahora");
+    }catch(err){$("asig-err").hidden=false;$("asig-err").textContent="No se pudo: "+err.message}
+    $("asig-ok").disabled=false;
+  });
 })();
 
 </script>
