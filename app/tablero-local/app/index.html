@@ -371,6 +371,7 @@ const mesDe=d=>d.getFullYear()+"-"+pad(d.getMonth()+1);
 const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const fmtFecha=iso=>{if(!iso)return"";const [y,m,d]=iso.slice(0,10).split("-");return d+"/"+m};
 const INICIO_INCENTIVOS="2026-11-01";
+const EXCESOS_DESDE="2026-11-01";
 const META_AUD=[4,5];
 
 $("fecha").textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
@@ -802,7 +803,7 @@ setInterval(()=>{render()},5*60*1000);
   const err=e=>console.warn(e);
   db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
   db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
-  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));renderOb();renderVivo()},err);
+  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);renderOb();renderVivo()},err);
   db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);
   db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
   db.doc("meta/auditorias").onSnapshot(s=>{audSug=s.exists?s.data():{};renderOb()},err);

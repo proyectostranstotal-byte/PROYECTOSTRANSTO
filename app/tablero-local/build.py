@@ -63,6 +63,10 @@ cambiar('<span class="ad">${esc(a.d)}</span></li>', '<span class="ad">${esc(a.d)
 cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''', '''<td>${u.chofer?esc(u.chofer)+(u.chofer_manual?' <span class="sub">(a mano)</span>':''):'<span class="sub">—</span>'}</td>''')
 cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8") + '</div>\n\n<script>')
 
+# Excesos: solo desde noviembre 2026 (los de octubre quedan guardados en datos\excesos, pero no se muestran)
+cambiar('db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));', 'db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);')
+cambiar('const INICIO_INCENTIVOS="2026-11-01";', 'const INICIO_INCENTIVOS="2026-11-01";\nconst EXCESOS_DESDE="2026-11-01";')
+
 # Script de asignar chofer al final
 CHAT_JS = (AQUI / "asignar.js").read_text(encoding="utf8")
 i = src.rindex("</script>")
