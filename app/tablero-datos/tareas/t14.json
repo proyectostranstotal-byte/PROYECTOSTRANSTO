@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 14,
+ "prioridad": 2,
+ "siguiente": "Cerrar con Distribución quién pide, quién aprueba y quién carga el formulario.",
+ "titulo": "Formalizar extensiones de jornada >12 h antes del viaje"
+}

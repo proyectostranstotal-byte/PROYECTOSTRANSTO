@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "mensual",
+ "fuente": "PDF Air Liquide + Excel IMSEG",
+ "nombre": "Reporte seguridad vial Air Liquide",
+ "orden": 8,
+ "resumen": "Mensual. Responder el informe de KPIs de Air Liquide punto por punto y conciliar contra IMSEG (eventos por iButton mal cerrado, cambios de chofer, demoras en planta)."
+}

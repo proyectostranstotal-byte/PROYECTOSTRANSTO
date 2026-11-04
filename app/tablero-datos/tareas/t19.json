@@ -1,0 +1,8 @@
+{
+ "area": "flota",
+ "estado": "hecha",
+ "orden": 19,
+ "prioridad": 3,
+ "siguiente": "Reemplazada: las asignaciones se leen de Transdat cada hora (sección Flota ahora).",
+ "titulo": "Asignar tractor a cisternas 539, 559, 560, 578 y 602"
+}

@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 15,
+ "prioridad": 3,
+ "siguiente": "Sugerido: contar días seguidos desde el registro de jornada mensual.",
+ "titulo": "Alerta de días consecutivos trabajados por chofer"
+}

@@ -4,3 +4,4 @@
 - `scripts/analizar_gestor.py`: recalcula el análisis desde un `Gestor_de_Gastos.xlsx`.
 - `scripts/mejorar_gestor.py`: genera la versión v2 de la planilla (Billetera, Pagos, cuotas en USD).
 - `app/billetera.html`: app web "Billetera de Nico" (publicada como Artifact de Claude). Usa la base de datos y la lectura con IA del runtime de Artifacts; los datos viven en la base del artifact, no en este archivo.
+- `app/tablero.html`: "Tablero Transtotal" (trabajo, publicado como Artifact con base `db`). Ver `app/TABLERO.md` para la URL, el respaldo de datos en `app/tablero-datos/` y el prompt de la tarea programada; `app/ECOSISTEMA.md` inventaría los bots de la PC.

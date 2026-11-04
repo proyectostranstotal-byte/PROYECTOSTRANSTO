@@ -1,0 +1,8 @@
+{
+ "area": "pesadas",
+ "estado": "pendiente",
+ "orden": 10,
+ "prioridad": 2,
+ "siguiente": "Detecta HR escaneadas sin pesada cargada en CONTROL PESOS M3-KG.",
+ "titulo": "Correr check_pesadas.py cada semana"
+}

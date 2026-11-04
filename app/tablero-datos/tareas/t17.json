@@ -1,0 +1,8 @@
+{
+ "area": "hojas-ruta",
+ "estado": "pendiente",
+ "orden": 17,
+ "prioridad": 2,
+ "siguiente": "Abrir la consola (F12) al analizar una HR y pasarme el error.",
+ "titulo": "Hacer andar el análisis de HR en SmartMove Pro"
+}

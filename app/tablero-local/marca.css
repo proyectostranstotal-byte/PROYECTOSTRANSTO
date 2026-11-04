@@ -1,0 +1,72 @@
+/* Marca Transtotal Group: celeste #4FA4CC, grafito #4B4B4A, azul profundo #06508F; Urbanist / Poppins / Archivo */
+:root{
+  --bg:#F2F4F6;--surface:#FFFFFF;--ink:#4B4B4A;--muted:#666666;--line:#DCE1E6;
+  --accent:#E0A100;--accent-soft:#FBF1D6;--ok:#2E9E6B;--ok-soft:#E2F3EA;--doing:#4FA4CC;
+  --bad:#D64545;--bad-soft:#FBE4E4;
+  --tt-azul:#06508F;--tt-celeste:#4FA4CC;--tt-cian:#00A0C8;--tt-dep:#0087CC;
+  --f-display:"Urbanist","Poppins","Segoe UI",Arial,sans-serif;
+  --f-body:"Poppins","Segoe UI",Arial,sans-serif;
+  --f-mono:"Archivo","Urbanist",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#222222;--surface:#2C2C2C;--ink:#ECEEF0;--muted:#A9B0B6;--line:#3A3F44;
+  --accent:#E0A100;--accent-soft:#3A3014;--ok:#4CC08A;--ok-soft:#173326;--doing:#4FA4CC;
+  --bad:#E06A6A;--bad-soft:#3D1F1F;--tt-azul:#4FA4CC}}
+:root[data-theme="dark"]{
+  --bg:#222222;--surface:#2C2C2C;--ink:#ECEEF0;--muted:#A9B0B6;--line:#3A3F44;
+  --accent:#E0A100;--accent-soft:#3A3014;--ok:#4CC08A;--ok-soft:#173326;--doing:#4FA4CC;
+  --bad:#E06A6A;--bad-soft:#3D1F1F;--tt-azul:#4FA4CC}
+
+body{font-size:14.5px;line-height:1.5}
+h1,h2,.ob-h h3,.area-h h3,.caja h3{font-family:var(--f-display);font-weight:700}
+h2{letter-spacing:.04em;color:var(--ink)}
+h2::before{content:"►";color:var(--tt-celeste);font-size:.6em;vertical-align:.25em;margin-right:8px}
+.ob-k,.kpis b,.kv b{font-family:var(--f-mono);font-weight:700;color:var(--tt-azul)}
+.chip,.estado{border-radius:3px}
+
+/* Encabezado: degradado azul con la trama de flechas en la esquina */
+header.tt-head{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  border:0;padding:22px 24px;color:#fff;border-radius:4px;
+  justify-content:flex-start;
+  background:url("marca/trama.png") right -30px center/auto 130% no-repeat,linear-gradient(135deg,#06508F,#4FA4CC)}
+.tt-logo img{display:block;height:54px;width:auto}
+.tt-tit{display:grid;gap:2px}
+.tt-etq{font:600 .7rem var(--f-body);letter-spacing:.25em;text-transform:uppercase;opacity:.85}
+header.tt-head h1{color:#fff;text-transform:none;font-size:2rem;letter-spacing:0}
+header.tt-head .fecha{color:#fff;opacity:.85;font-family:var(--f-body);text-transform:capitalize}
+@media (max-width:600px){.tt-logo img{height:40px}header.tt-head h1{font-size:1.6rem}}
+
+/* Botones de la marca */
+.btn{background:var(--tt-azul);color:#fff;border-radius:3px}
+.btn:hover:not(:disabled){background:var(--tt-celeste)}
+.btn.sec{border-color:var(--tt-celeste);color:var(--ink)}
+.mesnav button{border-radius:3px}
+input,select{border-radius:3px}
+
+/* Tarjetas */
+.ob,.area,.caja,.salud li,.tw,.al-l li{border-radius:4px}
+.hoy{background:var(--surface);border-left-color:var(--tt-celeste);border:1px solid var(--line);border-left:6px solid var(--tt-celeste)}
+
+/* Mapa más grande y pines más claros */
+.mapa{height:560px;border-radius:4px;overflow:hidden}
+@media (max-width:600px){.mapa{height:380px}}
+.pin{font-family:var(--f-mono);font-size:12px;padding:2px 7px;border-radius:12px}
+.est-en_viaje{--c:#2E9E6B}.est-detenida{--c:#E0A100}.est-en_base{--c:#06508F}.est-sin_senal{--c:#8A9096}
+.leaflet-container{background:#E8EDF1}
+
+.kv button[aria-pressed="true"] b{color:inherit}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.al-l .asig-b{justify-self:start;margin-top:4px;font-size:.78rem;padding:3px 10px}
+.asig-dlg{border:1px solid var(--line);border-top:4px solid var(--tt-celeste);background:var(--surface);color:var(--ink);padding:18px 20px;max-width:420px;width:calc(100% - 32px)}
+.asig-dlg::backdrop{background:rgba(0,0,0,.45)}
+.asig-dlg form{display:grid;gap:12px}
+.asig-dlg h3{margin:0;font-family:var(--f-display)}
+.asig-dlg label{display:grid;gap:4px;font-size:.88rem}
+.vivo .asig-b{font-size:.75rem;padding:2px 8px}
+/* "Hacé esto hoy" sacado a pedido del usuario (03/11/2026) */
+section.hoy{display:none!important}
+.vivo td.hrc{white-space:normal;min-width:120px;font-size:.84rem}
+.vivo td.hrc b{font-family:var(--f-mono);font-weight:700}
+.conf{font:600 .65rem var(--f-body);text-transform:uppercase;letter-spacing:.05em;padding:1px 5px;border:1px solid currentColor;border-radius:3px}
+.conf.c-alta{color:var(--ok)}.conf.c-media{color:var(--accent)}.conf.c-baja{color:var(--muted)}.conf.c-revisar{color:var(--bad)}

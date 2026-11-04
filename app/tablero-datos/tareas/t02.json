@@ -1,0 +1,8 @@
+{
+ "area": "liquidaciones",
+ "estado": "pendiente",
+ "orden": 2,
+ "prioridad": 1,
+ "siguiente": "Script único: borra DQ, conserva el set con GE y elimina u oculta según el tipo.",
+ "titulo": "Macro única para limpiar columnas de liquidación"
+}

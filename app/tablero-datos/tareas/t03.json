@@ -1,0 +1,8 @@
+{
+ "area": "reporte-al",
+ "estado": "pendiente",
+ "orden": 3,
+ "prioridad": 2,
+ "siguiente": "Filtrar eventos IMSEG con magnitud imposible (iButton sin cerrar) antes de cruzar.",
+ "titulo": "Automatizar conciliación IMSEG vs Air Liquide"
+}

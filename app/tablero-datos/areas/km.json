@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "mensual",
+ "fuente": "HR, Transoft, diferencias_MES.xlsx",
+ "nombre": "Control de km",
+ "orden": 4,
+ "resumen": "Mensual. Cruce km odómetro (HR) vs km facturados/Transoft; diferencias se facturan con aprobación de Air Liquide."
+}

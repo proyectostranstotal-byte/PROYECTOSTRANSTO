@@ -1,0 +1,8 @@
+{
+ "area": "km",
+ "estado": "pendiente",
+ "orden": 9,
+ "prioridad": 2,
+ "siguiente": "Reusar el cruce comparacion_hr_km (normaliza HR/VRAC) como plantilla mensual.",
+ "titulo": "Cruce mensual km HR vs Transoft automático"
+}

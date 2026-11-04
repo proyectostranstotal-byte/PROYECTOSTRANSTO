@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 4,
+ "prioridad": 1,
+ "siguiente": "Definir de dónde sale la primera marca satelital (export de Wialon o captura).",
+ "titulo": "Mensaje automático de inicio de turno y límite 12 h"
+}

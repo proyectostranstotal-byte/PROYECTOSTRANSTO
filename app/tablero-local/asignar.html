@@ -1,0 +1,10 @@
+  <dialog id="asig-dlg" class="asig-dlg">
+    <form method="dialog" id="asig-f">
+      <h3 id="asig-t">Asignar chofer</h3>
+      <p class="sub">Queda en asignaciones-manuales.json: lo usa el reporte de jornada y el tablero deja de marcarla sin chofer.</p>
+      <label>Chofer <select id="asig-ch" required></select></label>
+      <label>Desde (opcional, si cambió de chofer en el día) <input type="time" id="asig-desde"></label>
+      <p class="sub" id="asig-err" hidden></p>
+      <div class="row"><button class="btn" type="submit" id="asig-ok">Guardar</button><button class="btn sec" type="button" id="asig-x">Cancelar</button></div>
+    </form>
+  </dialog>

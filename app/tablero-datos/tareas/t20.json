@@ -1,0 +1,8 @@
+{
+ "area": "operacion",
+ "estado": "pendiente",
+ "orden": 0,
+ "prioridad": 1,
+ "siguiente": "21/10 15:34: AG 758 LX a 77 km/h sin iButton. Pedir al chofer que se loguee o la jornada no se controla.",
+ "titulo": "570 circulando sin chofer logueado (iButton)"
+}

@@ -1,0 +1,8 @@
+{
+ "estado": "rutina",
+ "frecuencia": "mensual",
+ "fuente": "Transoft (ANALITIK), ALASA_MES.xlsx",
+ "nombre": "Liquidaciones",
+ "orden": 2,
+ "resumen": "Mensual. ANALITIK de Transoft. Borrar DQ primero; conservar G,H,M,O,S,T,V,Y,AB,AH,BF,DQ,EA,FO,GE,HA,HB,HC,HD,HJ,IT. Choferes: eliminar resto; Air Liquide: ocultar (corre macro)."
+}
