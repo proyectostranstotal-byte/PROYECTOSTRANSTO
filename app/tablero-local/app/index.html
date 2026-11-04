@@ -815,7 +815,7 @@ setInterval(()=>{render()},5*60*1000);
   const err=e=>console.warn(e);
   db.collection("areas").onSnapshot(s=>{areas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
   db.collection("tareas").onSnapshot(s=>{tareas=s.docs.map(d=>({id:d.id,...d.data()}));render()},err);
-  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb();renderVivo()},err);
+  db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE).map(e=>/sin chofer|sin_chofer|sin se[ñn]al/i.test(e.tipo||"")&&e.requiere!==true?{...e,requiere:false,motivo:e.motivo||"No es exceso del chofer: tramo sin chofer logueado o sin GPS."}:e);armarFaltas();renderOb();renderVivo()},err);
   db.collection("faltas").onSnapshot(s=>{faltasMan=s.docs.map(d=>({id:d.id,...d.data()})).filter(f=>!f.exceso_id&&(f.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb()},err);
   db.doc("meta/flota").onSnapshot(s=>{flota=s.exists?s.data():{};render();renderOb()},err);
   db.doc("meta/auditorias").onSnapshot(s=>{audSug=s.exists?s.data():{};renderOb()},err);

@@ -64,7 +64,7 @@ cambiar('''<td>${u.chofer?esc(u.chofer):'<span class="sub">—</span>'}</td>''',
 cambiar('</div>\n\n<script>', (AQUI / "asignar.html").read_text(encoding="utf8") + '</div>\n\n<script>')
 
 # Excesos: solo desde noviembre 2026 (los de octubre quedan guardados en datos\excesos, pero no se muestran)
-cambiar('db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));', 'db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE);')
+cambiar('db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()}));', 'db.collection("excesos").onSnapshot(s=>{excesos=s.docs.map(d=>({id:d.id,...d.data()})).filter(e=>(e.fecha||"")>=EXCESOS_DESDE).map(e=>/sin chofer|sin_chofer|sin se[ñn]al/i.test(e.tipo||"")&&e.requiere!==true?{...e,requiere:false,motivo:e.motivo||"No es exceso del chofer: tramo sin chofer logueado o sin GPS."}:e);')
 cambiar('const INICIO_INCENTIVOS="2026-11-01";', 'const INICIO_INCENTIVOS="2026-11-01";\nconst EXCESOS_DESDE="2026-11-01";')
 
 # Incentivos: cada exceso desde noviembre que requiere justificación y no fue justificado es una falta automática
@@ -72,7 +72,7 @@ cambiar('const INICIO_INCENTIVOS="2026-11-01";', 'const INICIO_INCENTIVOS="2026-
 cambiar('excesos=[],faltas=[],', 'excesos=[],faltas=[],faltasMan=[],')
 cambiar('db.collection("faltas").onSnapshot(s=>{faltas=s.docs.map(d=>({id:d.id,...d.data()}));renderOb()},err);',
         'db.collection("faltas").onSnapshot(s=>{faltasMan=s.docs.map(d=>({id:d.id,...d.data()})).filter(f=>!f.exceso_id&&(f.fecha||"")>=EXCESOS_DESDE);armarFaltas();renderOb()},err);')
-cambiar('.filter(e=>(e.fecha||"")>=EXCESOS_DESDE);', '.filter(e=>(e.fecha||"")>=EXCESOS_DESDE);armarFaltas();')
+cambiar('sin GPS."}:e);', 'sin GPS."}:e);armarFaltas();')
 cambiar('const EXCESOS_DESDE="2026-11-01";', '''const EXCESOS_DESDE="2026-11-01";
 function armarFaltas(){
   const auto=excesos.filter(e=>e.requiere!==false&&e.resultado!=="justificado"&&!/^\\s*N\\/?A\\b/i.test(e.comentario||"")).map(e=>({id:"ex:"+e.id,fecha:e.fecha,chofer:e.chofer||"Sin chofer",falta:[e.tipo,e.detalle].filter(Boolean).join(": "),avisado:!!e.avisado,avisado_fecha:e.avisado_fecha||"",auto:true}));
