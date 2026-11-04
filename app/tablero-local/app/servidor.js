@@ -72,10 +72,10 @@ async function entradasChecklist() {
   catch (e) { log("Checklist:", e.message); }
   return cacheChecklist.entradas;
 }
-// Cisterna en movimiento sin chofer: si hoy hay un Pre-Viaje con la patente del tractor, se le asigna ese chofer
+// Cisterna sin chofer (en viaje o detenida): si hoy hay un Pre-Viaje con la patente del tractor, se le asigna ese chofer
 // (como hace sin-gps.js) y queda guardado en asignaciones-manuales.json con fuente "checklist <patente>".
 async function asignarPorChecklist(unidades, asig) {
-  const sin = unidades.filter(u => !u.chofer && u.tractor && (u.estado === "en_viaje" || u.vel > 5));
+  const sin = unidades.filter(u => !u.chofer && u.tractor);   // en viaje o detenida: alcanza con el Pre-Viaje de hoy
   if (!sin.length) return;
   const entradas = await entradasChecklist();
   if (!entradas.length) return;
