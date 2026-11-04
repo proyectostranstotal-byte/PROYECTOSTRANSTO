@@ -47,17 +47,28 @@ def puntuar(unidad, fecha, ps, ruta_hr, catalogo, otras):
     if not planificada and not visitados:
         puntos = 0                       # otra unidad: solo cuenta si visitó a sus clientes
     return {"hr": ruta_hr["hr"], "puntos": puntos, "planificada": planificada,
-            "visitados": [{"orden": o, "cliente": n, "hora": datetime.fromtimestamp(p["ini"], AR).strftime("%H:%M"), "min": p["min"]} for o, n, p in visitados],
+            "visitados": [{"orden": o, "cliente": n, "hora": datetime.fromtimestamp(p["ini"], AR).strftime("%H:%M" if datetime.fromtimestamp(p["ini"], AR).date().isoformat() == fecha else "%d/%m %H:%M"), "min": p["min"]} for o, n, p in visitados],
             "carga": carga, "ajenos": sorted(set(ajenos))}
 
 def deducir(fecha):
     rutas = leer_json(ruta("rutas.json"), {})
     catalogo = leer_json(ruta("clientes.json"), {})
     todas = paradas_del_dia(fecha)
+    # Una HR dura varios días: se miran también los días anteriores, desde la última
+    # carga en planta (así cuenta Nestlé visitado ayer aunque hoy siga viaje).
+    d0 = date.fromisoformat(fecha)
+    previas = [paradas_del_dia((d0 - timedelta(days=i)).isoformat()) for i in (3, 2, 1)]
+    planta = plantas(catalogo)
     cands = candidatas(rutas, fecha)
     salida = {}
-    for unidad, ps in sorted(todas.items()):
-        if isinstance(ps, dict): continue
+    for unidad, ps_hoy in sorted(todas.items()):
+        if isinstance(ps_hoy, dict): continue
+        ps = [p for dia in previas for p in (dia.get(unidad) if isinstance(dia.get(unidad), list) else [])] + ps_hoy
+        cargas = [i for i, p in enumerate(ps) if any(km((p["lat"], p["lng"]), u) <= CONFIG["radio_cliente_km"] for u in planta)]
+        if cargas:
+            ps = ps[cargas[-1]:]                     # desde la última vez en planta
+        else:
+            ps = [p for dia in previas[1:] for p in (dia.get(unidad) if isinstance(dia.get(unidad), list) else [])] + ps_hoy
         notas = [puntuar(unidad, fecha, ps, r, catalogo, cands) for r in cands]
         notas = [n for n in notas if n["puntos"] > 0]
         if not notas: continue
